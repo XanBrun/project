@@ -3,7 +3,7 @@ import {
   Sword, Shield, Heart, Clock, Plus, Minus, Play, Pause, RotateCcw, 
   Dice6, Users, Trash2, Edit, Save, X, AlertTriangle, Zap, Target,
   ChevronRight, ChevronDown, Timer, SkipForward, Package, Eye,
-  BookOpen, Search, Filter, Copy, Star, Crown, TreePine, Book
+  BookOpen, Search, Filter, Copy, Star, Crown, TreePine, Book, Skull
 } from 'lucide-react';
 import { loadCharacters, generateId, saveData, loadData as dbLoadData } from '../services/db';
 import { Character, CONDITIONS } from '../types';
@@ -661,12 +661,12 @@ function CombatTracker() {
       'dragon': Crown,
       'fiend': Sword,
       'celestial': Star,
-      'fey': Sparkles,
+      'fey': Star,
       'elemental': Zap,
       'construct': Shield,
       'giant': Users,
       'monstrosity': Target,
-      'ooze': Circle,
+      'ooze': Target,
       'plant': TreePine,
       'aberration': Eye
     };
