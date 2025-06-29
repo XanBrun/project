@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Target, Gem, Book, Sparkles, Home, Crown } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Target, Gem, Book, Sparkles, Home, Crown, ChevronDown, Store } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
@@ -8,7 +8,7 @@ import {
 import { 
   Shop, ShopItem, Character, CartItem, Transaction, Currency,
   CURRENCY_CONVERSION, CURRENCY_NAMES, CURRENCY_SYMBOLS,
-  RARITY_COLORS, RARITY_NAMES, CATEGORY_NAMES
+  RARITY_COLORS, RARITY_NAMES, CATEGORY_NAMES, SHOP_TYPE_NAMES
 } from '../types';
 
 function ShopPage() {
@@ -326,26 +326,6 @@ function ShopPage() {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Character Selection */}
-            <div className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-amber-600" />
-              <select
-                value={selectedCharacter?.id || ''}
-                onChange={(e) => {
-                  const character = characters.find(c => c.id === e.target.value);
-                  setSelectedCharacter(character || null);
-                }}
-                className="p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">Seleccionar personaje...</option>
-                {characters.map(character => (
-                  <option key={character.id} value={character.id}>
-                    {character.name} - {formatPrice(character.currency)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Cart Button */}
             <button
               onClick={() => setShowCart(true)}
@@ -362,231 +342,255 @@ function ShopPage() {
           </div>
         </div>
 
-        {/* Character Info */}
-        {selectedCharacter && (
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-amber-900">{selectedCharacter.name}</h3>
-                <p className="text-amber-700">{selectedCharacter.race} {selectedCharacter.class} - Nivel {selectedCharacter.level}</p>
+        {/* Shop and Character Selection */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Shop Selection Dropdown */}
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <Store className="w-5 h-5 text-purple-600" />
+              <h3 className="font-bold text-purple-900">Seleccionar Tienda</h3>
+            </div>
+            <div className="relative">
+              <select
+                value={selectedShop?.id || ''}
+                onChange={(e) => {
+                  const shop = shops.find(s => s.id === e.target.value);
+                  setSelectedShop(shop || null);
+                  // Clear filters when changing shops
+                  setSearchTerm('');
+                  setCategoryFilter('');
+                  setRarityFilter('');
+                }}
+                className="w-full p-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white appearance-none pr-10"
+              >
+                <option value="">Elige una tienda...</option>
+                {shops.map(shop => (
+                  <option key={shop.id} value={shop.id}>
+                    {shop.name} - {SHOP_TYPE_NAMES[shop.type]} ({shop.items.length} objetos)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 pointer-events-none" size={20} />
+            </div>
+            {selectedShop && (
+              <div className="mt-3 text-sm">
+                <p className="text-purple-700">
+                  <strong>Ubicación:</strong> {selectedShop.location}
+                </p>
+                <p className="text-purple-700">
+                  <strong>Encargado:</strong> {selectedShop.keeper}
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="text-purple-700">{selectedShop.reputation}% reputación</span>
+                  </div>
+                  {selectedShop.discountPercentage > 0 && (
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {selectedShop.discountPercentage}% descuento
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="text-right">
-                <div className="text-sm text-amber-700">Dinero disponible:</div>
-                <div className="font-bold text-amber-900">{formatPrice(selectedCharacter.currency)}</div>
+            )}
+          </div>
+
+          {/* Character Selection */}
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-center space-x-2 mb-3">
+              <Users className="w-5 h-5 text-blue-600" />
+              <h3 className="font-bold text-blue-900">Personaje Comprador</h3>
+            </div>
+            <div className="relative">
+              <select
+                value={selectedCharacter?.id || ''}
+                onChange={(e) => {
+                  const character = characters.find(c => c.id === e.target.value);
+                  setSelectedCharacter(character || null);
+                }}
+                className="w-full p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none pr-10"
+              >
+                <option value="">Seleccionar personaje...</option>
+                {characters.map(character => (
+                  <option key={character.id} value={character.id}>
+                    {character.name} - {character.class} Nv.{character.level}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 pointer-events-none" size={20} />
+            </div>
+            {selectedCharacter && (
+              <div className="mt-3 text-sm">
+                <p className="text-blue-700">
+                  <strong>Raza:</strong> {selectedCharacter.race}
+                </p>
+                <p className="text-blue-700">
+                  <strong>Dinero disponible:</strong> {formatPrice(selectedCharacter.currency)}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Selected Shop Info */}
+        {selectedShop && (
+          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+            <div className="flex items-center space-x-3">
+              <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${getShopColor(selectedShop.type)} flex items-center justify-center`}>
+                {React.createElement(getShopIcon(selectedShop.type), { className: "w-6 h-6 text-white" })}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-amber-900">{selectedShop.name}</h3>
+                <p className="text-amber-700">{selectedShop.description}</p>
+                <p className="text-sm text-amber-600 mt-1">
+                  {SHOP_TYPE_NAMES[selectedShop.type]} • {selectedShop.items.length} objetos disponibles
+                </p>
               </div>
             </div>
           </div>
         )}
-
-        {/* Debug Info */}
-        <div className="mt-4 text-sm text-gray-600">
-          <p>Tiendas cargadas: {shops.length}</p>
-          {selectedShop && <p>Objetos en tienda seleccionada: {selectedShop.items.length}</p>}
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Shops List */}
+      {/* Shop Content */}
+      {selectedShop ? (
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-amber-200">
-          <h2 className="text-xl font-bold text-amber-900 mb-4">Tiendas Disponibles</h2>
-          
-          <div className="space-y-3">
-            {shops.map(shop => {
-              const ShopIcon = getShopIcon(shop.type);
-              const shopColor = getShopColor(shop.type);
-              
-              return (
-                <div
-                  key={shop.id}
-                  onClick={() => setSelectedShop(shop)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedShop?.id === shop.id
-                      ? 'border-amber-500 bg-amber-50'
-                      : 'border-amber-200 bg-white hover:border-amber-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${shopColor} flex items-center justify-center`}>
-                      <ShopIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-amber-900">{shop.name}</h3>
-                      <p className="text-xs text-amber-600">{shop.location}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-amber-700 mb-2">{shop.description}</p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-amber-600">Por {shop.keeper}</span>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-3 h-3 text-yellow-500" />
-                      <span className="text-amber-600">{shop.reputation}%</span>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-amber-500">
-                    {shop.items.length} objetos disponibles
-                  </div>
-                  {shop.discountPercentage > 0 && (
-                    <div className="mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full inline-block">
-                      {shop.discountPercentage}% descuento
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-400" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar objetos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+            
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            >
+              <option value="">Todas las categorías</option>
+              {Object.entries(CATEGORY_NAMES).map(([key, name]) => (
+                <option key={key} value={key}>{name}</option>
+              ))}
+            </select>
+            
+            <select
+              value={rarityFilter}
+              onChange={(e) => setRarityFilter(e.target.value)}
+              className="p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            >
+              <option value="">Todas las rarezas</option>
+              {Object.entries(RARITY_NAMES).map(([key, name]) => (
+                <option key={key} value={key}>{name}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Shop Items */}
-        <div className="lg:col-span-3">
-          {selectedShop ? (
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-amber-200">
-              {/* Shop Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-amber-900">{selectedShop.name}</h2>
-                  <p className="text-amber-700">{selectedShop.description}</p>
-                  <p className="text-sm text-amber-600 mt-1">
-                    {selectedShop.items.length} objetos • Atendido por {selectedShop.keeper}
-                  </p>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Buscar objetos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+          {/* Items Grid */}
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+              <p className="text-amber-600 text-lg">No se encontraron objetos</p>
+              <p className="text-amber-500 text-sm mb-4">
+                {searchTerm || categoryFilter || rarityFilter 
+                  ? 'Intenta ajustar los filtros de búsqueda'
+                  : 'Esta tienda no tiene objetos disponibles'
+                }
+              </p>
+              {(searchTerm || categoryFilter || rarityFilter) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCategoryFilter('');
+                    setRarityFilter('');
+                  }}
+                  className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                 >
-                  <option value="">Todas las categorías</option>
-                  {Object.entries(CATEGORY_NAMES).map(([key, name]) => (
-                    <option key={key} value={key}>{name}</option>
-                  ))}
-                </select>
-                
-                <select
-                  value={rarityFilter}
-                  onChange={(e) => setRarityFilter(e.target.value)}
-                  className="p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                >
-                  <option value="">Todas las rarezas</option>
-                  {Object.entries(RARITY_NAMES).map(([key, name]) => (
-                    <option key={key} value={key}>{name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Items Grid */}
-              {filteredItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-                  <p className="text-amber-600 text-lg">No se encontraron objetos</p>
-                  <p className="text-amber-500 text-sm mb-4">
-                    {searchTerm || categoryFilter || rarityFilter 
-                      ? 'Intenta ajustar los filtros de búsqueda'
-                      : 'Esta tienda no tiene objetos disponibles'
-                    }
-                  </p>
-                  {(searchTerm || categoryFilter || rarityFilter) && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setCategoryFilter('');
-                        setRarityFilter('');
-                      }}
-                      className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                    >
-                      Limpiar Filtros
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map(item => (
-                    <div
-                      key={item.id}
-                      className={`bg-white rounded-xl p-4 border-2 shadow-sm hover:shadow-md transition-all ${RARITY_COLORS[item.rarity]}`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-amber-900 mb-1">{item.name}</h3>
-                          <p className="text-xs text-amber-600 mb-2">{CATEGORY_NAMES[item.category]} • {RARITY_NAMES[item.rarity]}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-amber-900">{formatPrice(item.price)}</div>
-                          <div className="text-xs text-amber-600">Stock: {item.inStock}</div>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-amber-700 mb-3">{item.description}</p>
-
-                      {/* Properties */}
-                      {item.properties.length > 0 && (
-                        <div className="mb-3">
-                          <div className="text-xs font-medium text-amber-800 mb-1">Propiedades:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {item.properties.map((prop, index) => (
-                              <span
-                                key={index}
-                                className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full"
-                              >
-                                {prop}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Damage/AC */}
-                      {(item.damage || item.armorClass) && (
-                        <div className="mb-3 text-sm">
-                          {item.damage && (
-                            <div className="text-red-700">
-                              <strong>Daño:</strong> {item.damage}
-                            </div>
-                          )}
-                          {item.armorClass && (
-                            <div className="text-blue-700">
-                              <strong>CA:</strong> {item.armorClass}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Add to Cart Button */}
-                      <button
-                        onClick={() => addToCart(item)}
-                        disabled={!selectedCharacter || item.inStock === 0}
-                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Plus size={16} />
-                        <span>Agregar al Carrito</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                  Limpiar Filtros
+                </button>
               )}
             </div>
           ) : (
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-amber-200 text-center">
-              <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-amber-900 mb-2">Selecciona una Tienda</h2>
-              <p className="text-amber-700">Elige una tienda de la lista para ver sus productos</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map(item => (
+                <div
+                  key={item.id}
+                  className={`bg-white rounded-xl p-4 border-2 shadow-sm hover:shadow-md transition-all ${RARITY_COLORS[item.rarity]}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-amber-900 mb-1">{item.name}</h3>
+                      <p className="text-xs text-amber-600 mb-2">{CATEGORY_NAMES[item.category]} • {RARITY_NAMES[item.rarity]}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-amber-900">{formatPrice(item.price)}</div>
+                      <div className="text-xs text-amber-600">Stock: {item.inStock}</div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-amber-700 mb-3">{item.description}</p>
+
+                  {/* Properties */}
+                  {item.properties.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-xs font-medium text-amber-800 mb-1">Propiedades:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {item.properties.map((prop, index) => (
+                          <span
+                            key={index}
+                            className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full"
+                          >
+                            {prop}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Damage/AC */}
+                  {(item.damage || item.armorClass) && (
+                    <div className="mb-3 text-sm">
+                      {item.damage && (
+                        <div className="text-red-700">
+                          <strong>Daño:</strong> {item.damage}
+                        </div>
+                      )}
+                      {item.armorClass && (
+                        <div className="text-blue-700">
+                          <strong>CA:</strong> {item.armorClass}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Add to Cart Button */}
+                  <button
+                    onClick={() => addToCart(item)}
+                    disabled={!selectedCharacter || item.inStock === 0}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus size={16} />
+                    <span>Agregar al Carrito</span>
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-amber-200 text-center">
+          <Store className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-amber-900 mb-2">Selecciona una Tienda</h2>
+          <p className="text-amber-700 mb-6">Elige una tienda del desplegable superior para ver sus productos</p>
+          <div className="text-sm text-amber-600">
+            <p>Tiendas disponibles: {shops.length}</p>
+          </div>
+        </div>
+      )}
 
       {/* Cart Modal */}
       {showCart && (
