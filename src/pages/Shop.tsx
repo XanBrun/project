@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, 
-  Package, User, ArrowLeft, Check, X, Eye, EyeOff, Sword,
-  Shield, Zap, Wrench, Horse, Truck, Hammer, Gem, Scroll
-} from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, User, ArrowLeft, Check, X, Eye, EyeOff, Sword, Shield, Zap, Wrench, Users as Horse, Truck, Hammer, Gem, Scroll } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
