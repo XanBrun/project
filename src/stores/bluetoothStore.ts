@@ -3,6 +3,7 @@ import { bluetoothService, formatBluetoothError } from '../services/bluetooth';
 
 interface BluetoothState {
   device: any | null;
+  deviceInfo: { name: string; mac: string; id: string } | null;
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
@@ -13,18 +14,20 @@ interface BluetoothState {
 
 export const useBluetoothStore = create<BluetoothState>((set, get) => ({
   device: null,
+  deviceInfo: null,
   isConnected: false,
   isConnecting: false,
   error: null,
 
   initializeBluetoothState: async () => {
     if (!navigator.bluetooth) {
-      set({ error: 'Bluetooth not supported in this browser' });
+      set({ error: 'Bluetooth no compatible con este navegador' });
       return;
     }
     
     set({
       device: null,
+      deviceInfo: null,
       isConnected: false,
       isConnecting: false,
       error: null
@@ -38,8 +41,11 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
       const device = await bluetoothService.requestDevice();
       if (device) {
         await bluetoothService.connect();
+        const deviceInfo = bluetoothService.getDeviceInfo();
+        
         set({
           device,
+          deviceInfo,
           isConnected: bluetoothService.isConnected(),
           isConnecting: false,
           error: null
@@ -58,6 +64,7 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
       await bluetoothService.disconnect();
       set({
         device: null,
+        deviceInfo: null,
         isConnected: false,
         error: null
       });

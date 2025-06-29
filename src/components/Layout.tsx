@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { 
   Dice6, Users, Sword, Map, Settings, Home, UserPlus, Bluetooth, BluetoothConnected, 
-  ShoppingCart, Menu, X 
+  ShoppingCart, Menu, X, Smartphone, Wifi 
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBluetoothStore } from '../stores/bluetoothStore';
@@ -21,7 +21,7 @@ const navigation = [
 
 function Layout() {
   const location = useLocation();
-  const { isConnected, isConnecting, connectToDevice, disconnectDevice, error } = useBluetoothStore();
+  const { isConnected, isConnecting, connectToDevice, disconnectDevice, error, deviceInfo } = useBluetoothStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -30,6 +30,17 @@ function Layout() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const formatMacAddress = (mac: string) => {
+    if (!mac || mac === 'No disponible') return mac;
+    // Ensure MAC address is properly formatted
+    return mac.toUpperCase();
+  };
+
+  const truncateDeviceName = (name: string, maxLength: number = 15) => {
+    if (!name || name.length <= maxLength) return name;
+    return name.substring(0, maxLength) + '...';
   };
 
   return (
@@ -129,9 +140,23 @@ function Layout() {
               ) : (
                 <Bluetooth className="h-5 w-5 text-amber-400" />
               )}
-              <span className="text-sm font-medium">
-                {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
-              </span>
+              <div className="flex-1">
+                <div className="text-sm font-medium">
+                  {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
+                </div>
+                {isConnected && deviceInfo && (
+                  <div className="text-xs text-amber-300">
+                    <div className="flex items-center space-x-1">
+                      <Smartphone className="w-3 h-3" />
+                      <span>{truncateDeviceName(deviceInfo.name, 12)}</span>
+                    </div>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <Wifi className="w-3 h-3" />
+                      <span>{formatMacAddress(deviceInfo.mac)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
           </div>
@@ -204,9 +229,23 @@ function Layout() {
               ) : (
                 <Bluetooth className="h-5 w-5 text-amber-400" />
               )}
-              <span className="text-sm font-medium">
-                {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
-              </span>
+              <div className="flex-1">
+                <div className="text-sm font-medium">
+                  {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
+                </div>
+                {isConnected && deviceInfo && (
+                  <div className="text-xs text-amber-300 mt-1">
+                    <div className="flex items-center space-x-1 mb-1">
+                      <Smartphone className="w-3 h-3" />
+                      <span title={deviceInfo.name}>{truncateDeviceName(deviceInfo.name, 18)}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Wifi className="w-3 h-3" />
+                      <span className="font-mono text-xs">{formatMacAddress(deviceInfo.mac)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
           </div>
@@ -247,7 +286,11 @@ function Layout() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-amber-500'}`} />
-                <span className="font-medium">{isConnected ? 'En línea' : 'Sin conexión'}</span>
+                <span className="font-medium">
+                  {isConnected ? (
+                    deviceInfo ? `${truncateDeviceName(deviceInfo.name, 20)}` : 'En línea'
+                  ) : 'Sin conexión'}
+                </span>
               </div>
             </div>
           </div>

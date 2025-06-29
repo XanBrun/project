@@ -3,6 +3,8 @@ export interface BluetoothDevice {
   id: string;
   name: string;
   connected: boolean;
+  macAddress?: string;
+  deviceName?: string;
 }
 
 export interface BluetoothMessage {
@@ -14,6 +16,7 @@ export interface BluetoothMessage {
 
 class BluetoothService {
   private device: BluetoothDevice | null = null;
+  private nativeDevice: BluetoothDevice | null = null;
   private server: BluetoothRemoteGATTServer | null = null;
   private characteristic: BluetoothRemoteGATTCharacteristic | null = null;
   private messageHandlers: Map<string, (message: BluetoothMessage) => void> = new Map();
@@ -32,18 +35,44 @@ class BluetoothService {
         throw new Error('Bluetooth is not supported in this browser');
       }
 
-      const device = await navigator.bluetooth.requestDevice({
+      const nativeDevice = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [this.SERVICE_UUID]
       });
 
+      // Store the native device reference
+      this.nativeDevice = nativeDevice as any;
+
+      // Extract device information
+      const deviceName = nativeDevice.name || 'Dispositivo Desconocido';
+      const deviceId = nativeDevice.id || 'unknown-id';
+      
+      // Try to get MAC address if available (some browsers provide it)
+      let macAddress = 'No disponible';
+      try {
+        // Some browsers might expose the MAC address in the device ID
+        if (deviceId.includes(':') && deviceId.length >= 17) {
+          macAddress = deviceId;
+        } else if (nativeDevice.id && nativeDevice.id.length >= 12) {
+          // Format as MAC address if it looks like one
+          const id = nativeDevice.id.replace(/[^a-fA-F0-9]/g, '');
+          if (id.length >= 12) {
+            macAddress = id.substring(0, 12).match(/.{2}/g)?.join(':').toUpperCase() || 'No disponible';
+          }
+        }
+      } catch (error) {
+        console.warn('Could not extract MAC address:', error);
+      }
+
       this.device = {
-        id: device.id,
-        name: device.name || 'Unknown Device',
-        connected: false
+        id: deviceId,
+        name: deviceName,
+        connected: false,
+        macAddress: macAddress,
+        deviceName: deviceName
       };
 
-      device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
+      nativeDevice.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
 
       return this.device;
     } catch (error) {
@@ -53,19 +82,27 @@ class BluetoothService {
   }
 
   async connect(): Promise<void> {
-    if (!this.device) {
+    if (!this.device || !this.nativeDevice) {
       throw new Error('No device selected. Call requestDevice() first.');
     }
 
     try {
-      const devices = await navigator.bluetooth.getDevices();
-      const device = devices.find(d => d.id === this.device!.id);
-
-      if (!device) {
-        throw new Error('Device not found');
+      // For reconnection, try to get the device again
+      let deviceToConnect = this.nativeDevice;
+      
+      if (!deviceToConnect.gatt) {
+        // Try to get devices and find our device
+        const devices = await navigator.bluetooth.getDevices();
+        deviceToConnect = devices.find(d => d.id === this.device!.id);
+        
+        if (!deviceToConnect) {
+          throw new Error('Device not found for reconnection');
+        }
+        
+        this.nativeDevice = deviceToConnect as any;
       }
 
-      this.server = await device.gatt!.connect();
+      this.server = await deviceToConnect.gatt!.connect();
       this.device.connected = true;
       
       // Try to get the service and characteristic
@@ -80,7 +117,11 @@ class BluetoothService {
         console.warn('Could not connect to D&D service, using basic connection:', serviceError);
       }
       
-      console.log('Connected to Bluetooth device:', this.device.name);
+      console.log('Connected to Bluetooth device:', {
+        name: this.device.deviceName,
+        mac: this.device.macAddress,
+        id: this.device.id
+      });
     } catch (error) {
       console.error('Error connecting to Bluetooth device:', error);
       throw error;
@@ -100,7 +141,7 @@ class BluetoothService {
     }
     this.server = null;
     this.characteristic = null;
-    console.log('Disconnected from Bluetooth device');
+    console.log('Disconnected from Bluetooth device:', this.device?.deviceName || 'Unknown');
   }
 
   private handleNotification(event: Event): void {
@@ -153,6 +194,16 @@ class BluetoothService {
 
   getDevice(): BluetoothDevice | null {
     return this.device;
+  }
+
+  getDeviceInfo(): { name: string; mac: string; id: string } | null {
+    if (!this.device) return null;
+    
+    return {
+      name: this.device.deviceName || this.device.name,
+      mac: this.device.macAddress || 'No disponible',
+      id: this.device.id
+    };
   }
 
   isConnected(): boolean {
@@ -214,19 +265,19 @@ export const bluetoothService = new BluetoothService();
 
 export const formatBluetoothError = (error: any): string => {
   if (error.name === 'NotFoundError') {
-    return 'No Bluetooth device was selected.';
+    return 'No se seleccionó ningún dispositivo Bluetooth.';
   } else if (error.name === 'SecurityError') {
-    return 'Bluetooth access was denied.';
+    return 'Se denegó el acceso a Bluetooth.';
   } else if (error.name === 'NotSupportedError') {
-    return 'Bluetooth is not supported on this device.';
+    return 'Bluetooth no es compatible con este dispositivo.';
   } else if (error.name === 'NetworkError') {
-    return 'Failed to connect to the Bluetooth device.';
+    return 'Error al conectar con el dispositivo Bluetooth.';
   } else if (error.name === 'InvalidStateError') {
-    return 'Bluetooth adapter is not available.';
+    return 'El adaptador Bluetooth no está disponible.';
   } else if (error.name === 'NotAllowedError') {
-    return 'Bluetooth permission was denied.';
+    return 'Se denegó el permiso de Bluetooth.';
   } else {
-    return error.message || 'An unknown Bluetooth error occurred.';
+    return error.message || 'Ocurrió un error desconocido de Bluetooth.';
   }
 };
 
@@ -235,7 +286,7 @@ export const checkBluetoothSupport = (): { supported: boolean; message: string }
   if (!navigator.bluetooth) {
     return {
       supported: false,
-      message: 'Web Bluetooth API is not supported in this browser. Please use Chrome, Edge, or Opera.'
+      message: 'La API Web Bluetooth no es compatible con este navegador. Por favor usa Chrome, Edge u Opera.'
     };
   }
 
@@ -243,12 +294,12 @@ export const checkBluetoothSupport = (): { supported: boolean; message: string }
   if (!window.isSecureContext) {
     return {
       supported: false,
-      message: 'Web Bluetooth requires a secure context (HTTPS). Please use HTTPS or localhost.'
+      message: 'Web Bluetooth requiere un contexto seguro (HTTPS). Por favor usa HTTPS o localhost.'
     };
   }
 
   return {
     supported: true,
-    message: 'Bluetooth is supported and ready to use.'
+    message: 'Bluetooth es compatible y está listo para usar.'
   };
 };
