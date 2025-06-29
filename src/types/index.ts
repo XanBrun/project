@@ -234,6 +234,10 @@ export interface CombatParticipant {
   conditions: string[];
   notes: string;
   characterId?: string;
+  equipment?: string[];
+  npcType?: string;
+  challengeRating?: string;
+  abilities?: string[];
 }
 
 export interface CombatEncounter {
@@ -243,6 +247,37 @@ export interface CombatEncounter {
   currentTurn: number;
   round: number;
   isActive: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface NPCTemplate {
+  id: string;
+  name: string;
+  type: 'humanoid' | 'beast' | 'undead' | 'dragon' | 'fiend' | 'celestial' | 'fey' | 'elemental' | 'construct' | 'giant' | 'monstrosity' | 'ooze' | 'plant' | 'aberration';
+  challengeRating: string;
+  hitPoints: { current: number; maximum: number; temporary: number };
+  armorClass: number;
+  abilities: string[];
+  description: string;
+  size: 'tiny' | 'small' | 'medium' | 'large' | 'huge' | 'gargantuan';
+  alignment: string;
+  speed: string;
+  stats: {
+    strength: number;
+    dexterity: number;
+    constitution: number;
+    intelligence: number;
+    wisdom: number;
+    charisma: number;
+  };
+  skills: string[];
+  damageResistances: string[];
+  damageImmunities: string[];
+  conditionImmunities: string[];
+  senses: string[];
+  languages: string[];
+  isCustom: boolean;
   createdAt: number;
   updatedAt: number;
 }
