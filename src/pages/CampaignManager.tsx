@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Plus, Edit, Trash2, Users, MapPin, Calendar, 
   Play, Pause, CheckCircle, Clock, Search, Filter, Eye,
-  User, Scroll, Home, Star, Save, X, ArrowLeft, Settings
+  User, Scroll, Home, Star, Save, X, ArrowLeft, Settings,
+  TreePine, Coins, Sword
 } from 'lucide-react';
 import { 
   loadCampaigns, saveCampaign, deleteCampaign, loadNPCs, saveNPC, deleteNPC,
