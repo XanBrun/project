@@ -399,9 +399,14 @@ export const deleteMap = async (id: string): Promise<void> => {
   await saveData('maps', filteredMaps);
 };
 
-// Shop functions - CORREGIDAS
+// Shop functions - VALIDACIÓN COMPLETA
 export const saveShop = async (shop: Shop): Promise<void> => {
   try {
+    // Validar estructura de la tienda antes de guardar
+    if (!validateShopStructure(shop)) {
+      throw new Error('Invalid shop structure');
+    }
+
     const shops = await loadShops();
     const existingIndex = shops.findIndex(s => s.id === shop.id);
     
@@ -435,11 +440,11 @@ export const loadShops = async (): Promise<Shop[]> => {
     
     // Validar que todas las tiendas tengan la estructura correcta
     shops = shops.filter(shop => {
-      if (!shop.id || !shop.name || !shop.items || !Array.isArray(shop.items)) {
+      const isValid = validateShopStructure(shop);
+      if (!isValid) {
         console.warn('Invalid shop found and filtered out:', shop);
-        return false;
       }
-      return true;
+      return isValid;
     });
     
     console.log('Shops loaded successfully:', shops.length);
@@ -475,6 +480,106 @@ export const deleteShop = async (id: string): Promise<void> => {
     console.error('Error deleting shop:', error);
     throw error;
   }
+};
+
+// Función de validación de estructura de tienda
+const validateShopStructure = (shop: any): shop is Shop => {
+  if (!shop || typeof shop !== 'object') {
+    console.warn('Shop validation failed: not an object');
+    return false;
+  }
+
+  // Campos obligatorios de la tienda
+  const requiredShopFields = ['id', 'name', 'description', 'type', 'location', 'keeper', 'items'];
+  for (const field of requiredShopFields) {
+    if (!shop[field]) {
+      console.warn(`Shop validation failed: missing field ${field}`);
+      return false;
+    }
+  }
+
+  // Validar que items sea un array
+  if (!Array.isArray(shop.items)) {
+    console.warn('Shop validation failed: items is not an array');
+    return false;
+  }
+
+  // Validar cada item en la tienda
+  for (let i = 0; i < shop.items.length; i++) {
+    const item = shop.items[i];
+    if (!validateShopItemStructure(item)) {
+      console.warn(`Shop validation failed: invalid item at index ${i}`, item);
+      return false;
+    }
+  }
+
+  // Validar campos numéricos
+  if (typeof shop.discountPercentage !== 'number' || shop.discountPercentage < 0 || shop.discountPercentage > 100) {
+    console.warn('Shop validation failed: invalid discountPercentage');
+    return false;
+  }
+
+  if (typeof shop.reputation !== 'number' || shop.reputation < 0 || shop.reputation > 100) {
+    console.warn('Shop validation failed: invalid reputation');
+    return false;
+  }
+
+  return true;
+};
+
+// Función de validación de estructura de item de tienda
+const validateShopItemStructure = (item: any): boolean => {
+  if (!item || typeof item !== 'object') {
+    console.warn('Item validation failed: not an object');
+    return false;
+  }
+
+  // Campos obligatorios del item
+  const requiredItemFields = ['id', 'name', 'description', 'category', 'rarity', 'price', 'weight', 'properties', 'inStock', 'tags'];
+  for (const field of requiredItemFields) {
+    if (item[field] === undefined || item[field] === null) {
+      console.warn(`Item validation failed: missing field ${field}`);
+      return false;
+    }
+  }
+
+  // Validar price (Currency)
+  if (!item.price || typeof item.price !== 'object') {
+    console.warn('Item validation failed: invalid price structure');
+    return false;
+  }
+
+  const requiredCurrencyFields = ['copper', 'silver', 'electrum', 'gold', 'platinum'];
+  for (const field of requiredCurrencyFields) {
+    if (typeof item.price[field] !== 'number' || item.price[field] < 0) {
+      console.warn(`Item validation failed: invalid price.${field}`);
+      return false;
+    }
+  }
+
+  // Validar arrays
+  if (!Array.isArray(item.properties)) {
+    console.warn('Item validation failed: properties is not an array');
+    return false;
+  }
+
+  if (!Array.isArray(item.tags)) {
+    console.warn('Item validation failed: tags is not an array');
+    return false;
+  }
+
+  // Validar campos numéricos
+  if (typeof item.weight !== 'number' || item.weight < 0) {
+    console.warn('Item validation failed: invalid weight');
+    return false;
+  }
+
+  if (typeof item.inStock !== 'number' || item.inStock < 0) {
+    console.warn('Item validation failed: invalid inStock');
+    return false;
+  }
+
+  return true;
 };
 
 const createDefaultShops = async (): Promise<Shop[]> => {
@@ -994,7 +1099,18 @@ const createDefaultShops = async (): Promise<Shop[]> => {
   ];
   
   console.log('Default shops created:', defaultShops.length);
-  return defaultShops;
+  
+  // Validar todas las tiendas antes de retornarlas
+  const validatedShops = defaultShops.filter(shop => {
+    const isValid = validateShopStructure(shop);
+    if (!isValid) {
+      console.error('Default shop failed validation:', shop.name);
+    }
+    return isValid;
+  });
+  
+  console.log('Validated shops:', validatedShops.length);
+  return validatedShops;
 };
 
 // Transaction functions
