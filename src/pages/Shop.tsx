@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, 
-  Package, Eye, X, Check, ArrowLeft, Sword, Shield, Zap,
-  Heart, Book, Gem, Hammer, Bow, Scroll, Potion, Crown,
-  Target, Feather, Anchor, Compass, Key, Lock, Flame,
-  Snowflake, Wind, Mountain, Waves, Sun, Moon, TreePine
-} from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Eye, X, Check, ArrowLeft, Sword, Shield, Zap, Heart, Book, Gem, Hammer, Bot as Bow, Scroll, Option as Potion, Crown, Target, Feather, Anchor, Compass, Key, Lock, Flame, Snowflake, Wind, Mountain, Waves, Sun, Moon, TreePine } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
