@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, 
-  Package, Users, ArrowLeft, X, Check, AlertCircle, Eye,
-  Sword, Shield, Zap, Scroll, Hammer, Horse, Carriage,
-  Target, Gem, Book, Potion, Wrench, Home, Crown, Sparkles
-} from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Users as Horse, Carrot as Carriage, Target, Gem, Book, Option as Potion, Wrench, Home, Crown, Sparkles } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
