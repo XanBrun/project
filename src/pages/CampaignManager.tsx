@@ -3,27 +3,194 @@ import {
   BookOpen, Plus, Edit, Trash2, Users, MapPin, Calendar, 
   Play, Pause, CheckCircle, Clock, Search, Filter, Eye,
   User, Scroll, Home, Star, Save, X, ArrowLeft, Settings,
-  TreePine, Coins, Sword
+  TreePine, Coins, Sword, Crown, Shield, Zap, Target, Book,
+  UserPlus, Copy, Database, FileText, Wand2
 } from 'lucide-react';
 import { 
   loadCampaigns, saveCampaign, deleteCampaign, loadNPCs, saveNPC, deleteNPC,
   loadLocations, saveLocation, deleteLocation, loadCampaignSessions, 
-  saveCampaignSession, deleteCampaignSession, generateId 
+  saveCampaignSession, deleteCampaignSession, generateId, saveData, loadData
 } from '../services/db';
-import { Campaign, NPC, Location, CampaignSession } from '../types';
+import { Campaign, NPC, Location, CampaignSession, NPCTemplate, CHARACTER_RACES, CHARACTER_CLASSES } from '../types';
+
+// Bestiario básico de NPCs
+const BASIC_BESTIARY: Omit<NPCTemplate, 'id' | 'createdAt' | 'updatedAt' | 'isCustom'>[] = [
+  {
+    name: "Guardia de la Ciudad",
+    type: 'humanoid',
+    challengeRating: "1/8",
+    hitPoints: { current: 11, maximum: 11, temporary: 0 },
+    armorClass: 16,
+    abilities: ["Ataque con Lanza", "Escudo"],
+    description: "Un guardia común que patrulla las calles de la ciudad.",
+    size: 'medium',
+    alignment: 'Lawful Neutral',
+    speed: "30 pies",
+    stats: { strength: 13, dexterity: 12, constitution: 12, intelligence: 10, wisdom: 11, charisma: 10 },
+    skills: ["Percepción"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Percepción pasiva 10"],
+    languages: ["Común"]
+  },
+  {
+    name: "Bandido",
+    type: 'humanoid',
+    challengeRating: "1/8",
+    hitPoints: { current: 11, maximum: 11, temporary: 0 },
+    armorClass: 12,
+    abilities: ["Ataque con Cimitarra", "Ballesta Ligera"],
+    description: "Un forajido que asalta a los viajeros en los caminos.",
+    size: 'medium',
+    alignment: 'Chaotic Evil',
+    speed: "30 pies",
+    stats: { strength: 11, dexterity: 12, constitution: 12, intelligence: 10, wisdom: 10, charisma: 10 },
+    skills: ["Sigilo"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Percepción pasiva 10"],
+    languages: ["Común"]
+  },
+  {
+    name: "Lobo",
+    type: 'beast',
+    challengeRating: "1/4",
+    hitPoints: { current: 11, maximum: 11, temporary: 0 },
+    armorClass: 13,
+    abilities: ["Mordisco", "Olfato Agudo", "Táctica de Manada"],
+    description: "Un depredador salvaje que caza en manadas.",
+    size: 'medium',
+    alignment: 'Unaligned',
+    speed: "40 pies",
+    stats: { strength: 12, dexterity: 15, constitution: 12, intelligence: 3, wisdom: 12, charisma: 6 },
+    skills: ["Percepción", "Sigilo"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Percepción pasiva 13"],
+    languages: []
+  },
+  {
+    name: "Esqueleto",
+    type: 'undead',
+    challengeRating: "1/4",
+    hitPoints: { current: 13, maximum: 13, temporary: 0 },
+    armorClass: 13,
+    abilities: ["Ataque con Espada Corta", "Arco Corto"],
+    description: "Los restos animados de un guerrero muerto.",
+    size: 'medium',
+    alignment: 'Lawful Evil',
+    speed: "30 pies",
+    stats: { strength: 10, dexterity: 14, constitution: 15, intelligence: 6, wisdom: 8, charisma: 5 },
+    skills: [],
+    damageResistances: [],
+    damageImmunities: ["Veneno"],
+    conditionImmunities: ["Envenenado", "Exhausto"],
+    senses: ["Visión en la Oscuridad 60 pies", "Percepción pasiva 9"],
+    languages: []
+  },
+  {
+    name: "Trasgo",
+    type: 'humanoid',
+    challengeRating: "1/4",
+    hitPoints: { current: 7, maximum: 7, temporary: 0 },
+    armorClass: 15,
+    abilities: ["Cimitarra", "Arco Corto", "Huida Ágil"],
+    description: "Una criatura pequeña y maliciosa que vive en cuevas.",
+    size: 'small',
+    alignment: 'Neutral Evil',
+    speed: "30 pies",
+    stats: { strength: 8, dexterity: 14, constitution: 10, intelligence: 10, wisdom: 8, charisma: 8 },
+    skills: ["Sigilo"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Visión en la Oscuridad 60 pies", "Percepción pasiva 9"],
+    languages: ["Común", "Trasgo"]
+  },
+  {
+    name: "Oso Negro",
+    type: 'beast',
+    challengeRating: "1/2",
+    hitPoints: { current: 19, maximum: 19, temporary: 0 },
+    armorClass: 11,
+    abilities: ["Garra", "Mordisco", "Olfato Agudo"],
+    description: "Un oso salvaje territorial y peligroso.",
+    size: 'medium',
+    alignment: 'Unaligned',
+    speed: "40 pies, trepar 30 pies",
+    stats: { strength: 15, dexterity: 10, constitution: 14, intelligence: 2, wisdom: 12, charisma: 7 },
+    skills: ["Percepción"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Olfato Agudo", "Percepción pasiva 13"],
+    languages: []
+  },
+  {
+    name: "Orco",
+    type: 'humanoid',
+    challengeRating: "1/2",
+    hitPoints: { current: 15, maximum: 15, temporary: 0 },
+    armorClass: 13,
+    abilities: ["Hacha de Guerra", "Jabalina", "Agresivo"],
+    description: "Un guerrero brutal y salvaje que vive para la batalla.",
+    size: 'medium',
+    alignment: 'Chaotic Evil',
+    speed: "30 pies",
+    stats: { strength: 16, dexterity: 12, constitution: 16, intelligence: 7, wisdom: 11, charisma: 10 },
+    skills: ["Intimidación"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Visión en la Oscuridad 60 pies", "Percepción pasiva 10"],
+    languages: ["Común", "Orco"]
+  },
+  {
+    name: "Cultista",
+    type: 'humanoid',
+    challengeRating: "1/8",
+    hitPoints: { current: 9, maximum: 9, temporary: 0 },
+    armorClass: 12,
+    abilities: ["Cimitarra", "Armadura de Cuero", "Fanatismo Oscuro"],
+    description: "Un seguidor devoto de una deidad malévola.",
+    size: 'medium',
+    alignment: 'Chaotic Evil',
+    speed: "30 pies",
+    stats: { strength: 11, dexterity: 12, constitution: 10, intelligence: 10, wisdom: 11, charisma: 10 },
+    skills: ["Engaño", "Religión"],
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: ["Percepción pasiva 10"],
+    languages: ["Común"]
+  }
+];
+
+const NPC_PROFESSIONS = [
+  'Comerciante', 'Guardia', 'Soldado', 'Clérigo', 'Mago', 'Ladrón', 'Asesino',
+  'Herrero', 'Posadero', 'Granjero', 'Noble', 'Mendigo', 'Explorador', 'Cazador',
+  'Pescador', 'Carpintero', 'Sastre', 'Joyero', 'Alquimista', 'Escriba', 'Bardo',
+  'Mercenario', 'Bandido', 'Cultista', 'Druida', 'Monje', 'Paladín', 'Hechicero'
+];
 
 function CampaignManager() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [npcs, setNPCs] = useState<NPC[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [sessions, setSessions] = useState<CampaignSession[]>([]);
+  const [bestiary, setBestiary] = useState<NPCTemplate[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'npcs' | 'locations' | 'sessions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'npcs' | 'locations' | 'sessions' | 'bestiary'>('overview');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNPCModal, setShowNPCModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [showBestiaryModal, setShowBestiaryModal] = useState(false);
+  const [showAddToBestiaryModal, setShowAddToBestiaryModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -45,7 +212,10 @@ function CampaignManager() {
     role: 'neutral' as const,
     location: '',
     description: '',
-    notes: ''
+    notes: '',
+    npcType: 'humanoid',
+    challengeRating: '1/8',
+    abilities: [] as string[]
   });
 
   const [newLocation, setNewLocation] = useState({
@@ -64,6 +234,26 @@ function CampaignManager() {
     summary: '',
     events: '',
     notes: ''
+  });
+
+  const [newBestiaryEntry, setNewBestiaryEntry] = useState({
+    name: '',
+    type: 'humanoid' as const,
+    challengeRating: '1/8',
+    hitPoints: { current: 10, maximum: 10, temporary: 0 },
+    armorClass: 10,
+    abilities: [] as string[],
+    description: '',
+    size: 'medium' as const,
+    alignment: 'Neutral',
+    speed: '30 pies',
+    stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+    skills: [] as string[],
+    damageResistances: [] as string[],
+    damageImmunities: [] as string[],
+    conditionImmunities: [] as string[],
+    senses: [] as string[],
+    languages: [] as string[]
   });
 
   useEffect(() => {
@@ -89,6 +279,23 @@ function CampaignManager() {
       setNPCs(npcsData);
       setLocations(locationsData);
       setSessions(sessionsData);
+
+      // Load bestiary
+      const savedBestiary = await loadData<NPCTemplate[]>('bestiary');
+      if (savedBestiary && savedBestiary.length > 0) {
+        setBestiary(savedBestiary);
+      } else {
+        // Initialize with basic bestiary
+        const initialBestiary = BASIC_BESTIARY.map(entry => ({
+          ...entry,
+          id: generateId(),
+          isCustom: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }));
+        setBestiary(initialBestiary);
+        await saveData('bestiary', initialBestiary);
+      }
 
       if (campaignsData.length > 0 && !selectedCampaign) {
         setSelectedCampaign(campaignsData[0]);
@@ -126,6 +333,9 @@ function CampaignManager() {
         location: "Phandalin",
         description: "Un enano comerciante que ha contratado a los aventureros para escoltar un cargamento a Phandalin.",
         notes: "Hermano de Nundro y Tharden. Conoce la ubicación de la Mina Perdida.",
+        npcType: "humanoid",
+        challengeRating: "1/4",
+        abilities: ["Persuasión", "Conocimiento de Comercio"],
         createdAt: Date.now(),
         updatedAt: Date.now()
       },
@@ -139,45 +349,9 @@ function CampaignManager() {
         location: "Cueva de los Trasgos",
         description: "Un trasgo líder que ha capturado a Sildar Hallwinter por órdenes de los Capas Negras.",
         notes: "Jefe de la cueva de trasgos. Puede ser convencido de cambiar de bando.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Sildar Hallwinter",
-        race: "Humano",
-        class: "Guerrero",
-        role: "ally",
-        location: "Phandalin",
-        description: "Un señor de Waterdeep y agente de la Alianza de los Señores, capturado por los trasgos.",
-        notes: "Busca a Iarno Albrek, que ha desaparecido en Phandalin.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Toblen Stonehill",
-        race: "Humano",
-        class: "Plebeyo",
-        role: "neutral",
-        location: "Posada Stonehill",
-        description: "El posadero de la Posada Stonehill en Phandalin, amigable y servicial.",
-        notes: "Fuente de información local y rumores. Ofrece habitaciones a 5 sp por noche.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Hermana Garaele",
-        race: "Elfa",
-        class: "Clérigo",
-        role: "quest_giver",
-        location: "Santuario de la Fortuna",
-        description: "Una clérigo élfica de Tymora que dirige el santuario en Phandalin.",
-        notes: "Agente de la Alianza de los Arpistas. Puede dar misiones secundarias.",
+        npcType: "humanoid",
+        challengeRating: "1",
+        abilities: ["Liderazgo", "Ataque con Maza"],
         createdAt: Date.now(),
         updatedAt: Date.now()
       }
@@ -195,95 +369,6 @@ function CampaignManager() {
         notes: "Centro principal de la aventura. Contiene varias tiendas y servicios.",
         createdAt: Date.now(),
         updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Cueva de los Trasgos",
-        type: "dungeon",
-        description: "Una cueva natural utilizada como guarida por una banda de trasgos liderada por Klarg.",
-        inhabitants: "Trasgos, lobos y Klarg el trasgo líder.",
-        secrets: "Contiene el equipaje de Gundren y pistas sobre los Capas Negras.",
-        notes: "Primera mazmorra de la aventura. Nivel apropiado: 1-2.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Mansión Tresendar",
-        type: "dungeon",
-        description: "Las ruinas de una antigua mansión que ahora sirve como base secreta de los Capas Rojas.",
-        inhabitants: "Capas Rojas, esqueletos y Glasstaff (Iarno Albrek).",
-        secrets: "Base de operaciones de los Capas Rojas. Contiene una rata gigante como mascota.",
-        notes: "Mazmorra principal en Phandalin. Nivel apropiado: 2-3.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Castillo de Cragmaw",
-        type: "dungeon",
-        description: "Un castillo en ruinas que sirve como fortaleza principal de la tribu Cragmaw.",
-        inhabitants: "Trasgos Cragmaw, hobgoblins, owlbears y el Rey Grol.",
-        secrets: "Aquí está prisionero Gundren Rockseeker.",
-        notes: "Fortaleza principal de los trasgos. Nivel apropiado: 3-4.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Mina Perdida de Phandelver",
-        type: "dungeon",
-        description: "Una antigua mina enana llena de magia y peligros, ahora controlada por el Araña Negra.",
-        inhabitants: "Doppelganger (Araña Negra), espectros, zombis y otras criaturas no-muertas.",
-        secrets: "Contiene la Forja de Hechizos, un artefacto mágico de gran poder.",
-        notes: "Mazmorra final de la campaña. Nivel apropiado: 4-5.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        name: "Posada Stonehill",
-        type: "building",
-        description: "La posada principal de Phandalin, un lugar acogedor para descansar y obtener información.",
-        inhabitants: "Toblen Stonehill (posadero), su esposa Trilena y sus hijos.",
-        secrets: "Los huéspedes a menudo comparten rumores valiosos.",
-        notes: "Centro social de Phandalin. Habitaciones: 5 sp/noche, comidas: 2 sp.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      }
-    ];
-
-    const exampleSessions: CampaignSession[] = [
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        sessionNumber: 1,
-        title: "El Camino a Phandalin",
-        date: Date.now() - (7 * 24 * 60 * 60 * 1000), // 7 days ago
-        duration: 4,
-        summary: "Los aventureros se conocen en Neverwinter y aceptan la misión de Gundren de escoltar un cargamento a Phandalin.",
-        events: "- Presentación de personajes en la taberna\n- Gundren explica la misión\n- Partida hacia Phandalin\n- Emboscada de trasgos en el camino\n- Descubrimiento de los caballos muertos",
-        notes: "Primera sesión exitosa. Los jugadores trabajaron bien en equipo durante la emboscada.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      },
-      {
-        id: generateId(),
-        campaignId: exampleCampaign.id,
-        sessionNumber: 2,
-        title: "La Cueva de los Trasgos",
-        date: Date.now() - (3 * 24 * 60 * 60 * 1000), // 3 days ago
-        duration: 3.5,
-        summary: "Los héroes rastrean a los trasgos hasta su cueva y rescatan a Sildar Hallwinter.",
-        events: "- Seguimiento de las huellas de los trasgos\n- Infiltración en la cueva\n- Combate con los lobos guardianes\n- Negociación con Klarg\n- Rescate de Sildar\n- Llegada a Phandalin",
-        notes: "Excelente uso de sigilo y diplomacia. Klarg se unió temporalmente al grupo.",
-        createdAt: Date.now(),
-        updatedAt: Date.now()
       }
     ];
 
@@ -297,12 +382,7 @@ function CampaignManager() {
       for (const location of exampleLocations) {
         await saveLocation(location);
       }
-      
-      for (const session of exampleSessions) {
-        await saveCampaignSession(session);
-      }
 
-      // Reload data to include the new example campaign
       await loadData();
       setSelectedCampaign(exampleCampaign);
     } catch (error) {
@@ -361,7 +441,10 @@ function CampaignManager() {
         role: 'neutral',
         location: '',
         description: '',
-        notes: ''
+        notes: '',
+        npcType: 'humanoid',
+        challengeRating: '1/8',
+        abilities: []
       });
       setShowNPCModal(false);
     } catch (error) {
@@ -429,6 +512,87 @@ function CampaignManager() {
     }
   };
 
+  const handleAddToBestiary = async () => {
+    if (!newBestiaryEntry.name.trim()) return;
+
+    const entry: NPCTemplate = {
+      id: generateId(),
+      ...newBestiaryEntry,
+      isCustom: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    try {
+      const updatedBestiary = [...bestiary, entry];
+      setBestiary(updatedBestiary);
+      await saveData('bestiary', updatedBestiary);
+      
+      setNewBestiaryEntry({
+        name: '',
+        type: 'humanoid',
+        challengeRating: '1/8',
+        hitPoints: { current: 10, maximum: 10, temporary: 0 },
+        armorClass: 10,
+        abilities: [],
+        description: '',
+        size: 'medium',
+        alignment: 'Neutral',
+        speed: '30 pies',
+        stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+        skills: [],
+        damageResistances: [],
+        damageImmunities: [],
+        conditionImmunities: [],
+        senses: [],
+        languages: []
+      });
+      setShowAddToBestiaryModal(false);
+    } catch (error) {
+      console.error('Error adding to bestiary:', error);
+    }
+  };
+
+  const handleAddNPCFromBestiary = async (template: NPCTemplate) => {
+    if (!selectedCampaign) return;
+
+    const npc: NPC = {
+      id: generateId(),
+      campaignId: selectedCampaign.id,
+      name: template.name,
+      race: template.type === 'humanoid' ? 'Humano' : template.type,
+      class: template.challengeRating,
+      role: template.alignment.includes('Evil') ? 'enemy' : 
+            template.alignment.includes('Good') ? 'ally' : 'neutral',
+      location: '',
+      description: template.description,
+      notes: `CR: ${template.challengeRating}, CA: ${template.armorClass}, PV: ${template.hitPoints.maximum}`,
+      npcType: template.type,
+      challengeRating: template.challengeRating,
+      abilities: template.abilities,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    try {
+      await saveNPC(npc);
+      setNPCs(prev => [...prev, npc]);
+      setShowBestiaryModal(false);
+    } catch (error) {
+      console.error('Error adding NPC from bestiary:', error);
+    }
+  };
+
+  const deleteBestiaryEntry = async (id: string) => {
+    try {
+      const updatedBestiary = bestiary.filter(entry => entry.id !== id);
+      setBestiary(updatedBestiary);
+      await saveData('bestiary', updatedBestiary);
+    } catch (error) {
+      console.error('Error deleting bestiary entry:', error);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'planning': return <Clock className="w-4 h-4 text-yellow-600" />;
@@ -470,6 +634,26 @@ function CampaignManager() {
     }
   };
 
+  const getCreatureTypeIcon = (type: string) => {
+    const icons: Record<string, any> = {
+      'humanoid': User,
+      'beast': TreePine,
+      'undead': Skull,
+      'dragon': Crown,
+      'fiend': Sword,
+      'celestial': Star,
+      'fey': Wand2,
+      'elemental': Zap,
+      'construct': Shield,
+      'giant': Target,
+      'monstrosity': Eye,
+      'ooze': Circle,
+      'plant': TreePine,
+      'aberration': Eye
+    };
+    return icons[type] || User;
+  };
+
   const filteredCampaigns = campaigns.filter(campaign =>
     campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     campaign.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -505,13 +689,15 @@ function CampaignManager() {
             </div>
           </div>
           
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
-          >
-            <Plus size={18} />
-            <span>Nueva Campaña</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
+            >
+              <Plus size={18} />
+              <span>Nueva Campaña</span>
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -606,7 +792,8 @@ function CampaignManager() {
                   { id: 'overview', label: 'Resumen', icon: Eye },
                   { id: 'npcs', label: 'NPCs', icon: Users },
                   { id: 'locations', label: 'Ubicaciones', icon: MapPin },
-                  { id: 'sessions', label: 'Sesiones', icon: Calendar }
+                  { id: 'sessions', label: 'Sesiones', icon: Calendar },
+                  { id: 'bestiary', label: 'Bestiario', icon: Database }
                 ].map(tab => {
                   const Icon = tab.icon;
                   return (
@@ -670,13 +857,22 @@ function CampaignManager() {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-amber-900">NPCs de la Campaña</h3>
-                    <button
-                      onClick={() => setShowNPCModal(true)}
-                      className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus size={16} />
-                      <span>Agregar NPC</span>
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setShowBestiaryModal(true)}
+                        className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      >
+                        <Database size={16} />
+                        <span>Del Bestiario</span>
+                      </button>
+                      <button
+                        onClick={() => setShowNPCModal(true)}
+                        className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        <span>Crear NPC</span>
+                      </button>
+                    </div>
                   </div>
 
                   {campaignNPCs.length === 0 ? (
@@ -692,6 +888,9 @@ function CampaignManager() {
                             <div>
                               <h4 className="font-bold text-amber-900">{npc.name}</h4>
                               <p className="text-sm text-amber-600">{npc.race} {npc.class}</p>
+                              {npc.challengeRating && (
+                                <p className="text-xs text-purple-600">CR: {npc.challengeRating}</p>
+                              )}
                             </div>
                             <div className="flex items-center space-x-1">
                               {getRoleIcon(npc.role)}
@@ -701,6 +900,18 @@ function CampaignManager() {
                           <p className="text-sm text-amber-700 mb-2">{npc.description}</p>
                           {npc.location && (
                             <p className="text-xs text-amber-600">📍 {npc.location}</p>
+                          )}
+                          {npc.abilities && npc.abilities.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-medium text-amber-700">Habilidades:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {npc.abilities.map((ability, index) => (
+                                  <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    {ability}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -792,6 +1003,91 @@ function CampaignManager() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'bestiary' && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-amber-900">Bestiario</h3>
+                    <button
+                      onClick={() => setShowAddToBestiaryModal(true)}
+                      className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Plus size={16} />
+                      <span>Agregar Criatura</span>
+                    </button>
+                  </div>
+
+                  {bestiary.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Database className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+                      <p className="text-amber-600">No hay criaturas en el bestiario</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {bestiary.map(creature => {
+                        const TypeIcon = getCreatureTypeIcon(creature.type);
+                        return (
+                          <div key={creature.id} className="bg-white rounded-lg p-4 border border-amber-200 shadow-sm">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h4 className="font-bold text-amber-900">{creature.name}</h4>
+                                <div className="flex items-center space-x-2 text-sm text-amber-600">
+                                  <TypeIcon className="w-4 h-4" />
+                                  <span className="capitalize">{creature.type}</span>
+                                  <span>•</span>
+                                  <span>CR {creature.challengeRating}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                {selectedCampaign && (
+                                  <button
+                                    onClick={() => handleAddNPCFromBestiary(creature)}
+                                    className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                    title="Agregar a campaña"
+                                  >
+                                    <Plus size={16} />
+                                  </button>
+                                )}
+                                {creature.isCustom && (
+                                  <button
+                                    onClick={() => deleteBestiaryEntry(creature.id)}
+                                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                    title="Eliminar"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm text-amber-700 mb-2">{creature.description}</p>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-amber-600">
+                              <div>CA: {creature.armorClass}</div>
+                              <div>PV: {creature.hitPoints.maximum}</div>
+                              <div>Tamaño: {creature.size}</div>
+                              <div>Velocidad: {creature.speed}</div>
+                            </div>
+                            {creature.abilities.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-medium text-amber-700">Habilidades:</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {creature.abilities.slice(0, 3).map((ability, index) => (
+                                    <span key={index} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                      {ability}
+                                    </span>
+                                  ))}
+                                  {creature.abilities.length > 3 && (
+                                    <span className="text-xs text-amber-600">+{creature.abilities.length - 3} más</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -908,7 +1204,7 @@ function CampaignManager() {
       {/* Create NPC Modal */}
       {showNPCModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-amber-900">Nuevo NPC</h2>
               <button
@@ -938,44 +1234,89 @@ function CampaignManager() {
                   <label className="block text-sm font-medium text-amber-900 mb-2">
                     Raza
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newNPC.race}
                     onChange={(e) => setNewNPC(prev => ({ ...prev, race: e.target.value }))}
                     className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    placeholder="Ej: Humano"
-                  />
+                  >
+                    <option value="">Seleccionar raza...</option>
+                    {CHARACTER_RACES.map(race => (
+                      <option key={race} value={race}>{race}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-amber-900 mb-2">
                     Clase/Profesión
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newNPC.class}
                     onChange={(e) => setNewNPC(prev => ({ ...prev, class: e.target.value }))}
                     className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    placeholder="Ej: Comerciante"
-                  />
+                  >
+                    <option value="">Seleccionar profesión...</option>
+                    {CHARACTER_CLASSES.map(cls => (
+                      <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                    {NPC_PROFESSIONS.map(profession => (
+                      <option key={profession} value={profession}>{profession}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Rol
+                  </label>
+                  <select
+                    value={newNPC.role}
+                    onChange={(e) => setNewNPC(prev => ({ ...prev, role: e.target.value as any }))}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="ally">Aliado</option>
+                    <option value="enemy">Enemigo</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="merchant">Comerciante</option>
+                    <option value="quest_giver">Dador de Misiones</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Challenge Rating
+                  </label>
+                  <select
+                    value={newNPC.challengeRating}
+                    onChange={(e) => setNewNPC(prev => ({ ...prev, challengeRating: e.target.value }))}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="0">0</option>
+                    <option value="1/8">1/8</option>
+                    <option value="1/4">1/4</option>
+                    <option value="1/2">1/2</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-amber-900 mb-2">
-                  Rol
+                  Ubicación
                 </label>
-                <select
-                  value={newNPC.role}
-                  onChange={(e) => setNewNPC(prev => ({ ...prev, role: e.target.value as any }))}
+                <input
+                  type="text"
+                  value={newNPC.location}
+                  onChange={(e) => setNewNPC(prev => ({ ...prev, location: e.target.value }))}
                   className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                >
-                  <option value="ally">Aliado</option>
-                  <option value="enemy">Enemigo</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="merchant">Comerciante</option>
-                  <option value="quest_giver">Dador de Misiones</option>
-                </select>
+                  placeholder="Dónde se encuentra el NPC"
+                />
               </div>
 
               <div>
@@ -987,6 +1328,22 @@ function CampaignManager() {
                   onChange={(e) => setNewNPC(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent h-20"
                   placeholder="Descripción del NPC..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-amber-900 mb-2">
+                  Habilidades (separadas por comas)
+                </label>
+                <input
+                  type="text"
+                  value={newNPC.abilities.join(', ')}
+                  onChange={(e) => setNewNPC(prev => ({ 
+                    ...prev, 
+                    abilities: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                  }))}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Ej: Ataque con Espada, Sigilo, Persuasión"
                 />
               </div>
 
@@ -1003,6 +1360,221 @@ function CampaignManager() {
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Crear NPC
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bestiary Selection Modal */}
+      {showBestiaryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-amber-900">Seleccionar del Bestiario</h2>
+              <button
+                onClick={() => setShowBestiaryModal(false)}
+                className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {bestiary.map(creature => {
+                const TypeIcon = getCreatureTypeIcon(creature.type);
+                return (
+                  <div key={creature.id} className="bg-white rounded-lg p-4 border border-amber-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-bold text-amber-900">{creature.name}</h4>
+                        <div className="flex items-center space-x-2 text-sm text-amber-600">
+                          <TypeIcon className="w-4 h-4" />
+                          <span className="capitalize">{creature.type}</span>
+                          <span>•</span>
+                          <span>CR {creature.challengeRating}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-amber-700 mb-3">{creature.description}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-amber-600 mb-3">
+                      <div>CA: {creature.armorClass}</div>
+                      <div>PV: {creature.hitPoints.maximum}</div>
+                    </div>
+                    <button
+                      onClick={() => handleAddNPCFromBestiary(creature)}
+                      className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    >
+                      Agregar a Campaña
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add to Bestiary Modal */}
+      {showAddToBestiaryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-amber-900">Agregar al Bestiario</h2>
+              <button
+                onClick={() => setShowAddToBestiaryModal(false)}
+                className="p-2 text-amber-600 hover:bg-amber-100 rounded-lg"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-amber-900 mb-2">
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  value={newBestiaryEntry.name}
+                  onChange={(e) => setNewBestiaryEntry(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Nombre de la criatura"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Tipo
+                  </label>
+                  <select
+                    value={newBestiaryEntry.type}
+                    onChange={(e) => setNewBestiaryEntry(prev => ({ ...prev, type: e.target.value as any }))}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="humanoid">Humanoide</option>
+                    <option value="beast">Bestia</option>
+                    <option value="undead">No-muerto</option>
+                    <option value="dragon">Dragón</option>
+                    <option value="fiend">Demonio</option>
+                    <option value="celestial">Celestial</option>
+                    <option value="fey">Feérico</option>
+                    <option value="elemental">Elemental</option>
+                    <option value="construct">Constructo</option>
+                    <option value="giant">Gigante</option>
+                    <option value="monstrosity">Monstruosidad</option>
+                    <option value="ooze">Cieno</option>
+                    <option value="plant">Planta</option>
+                    <option value="aberration">Aberración</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Challenge Rating
+                  </label>
+                  <select
+                    value={newBestiaryEntry.challengeRating}
+                    onChange={(e) => setNewBestiaryEntry(prev => ({ ...prev, challengeRating: e.target.value }))}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="0">0</option>
+                    <option value="1/8">1/8</option>
+                    <option value="1/4">1/4</option>
+                    <option value="1/2">1/2</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Clase de Armadura
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={newBestiaryEntry.armorClass}
+                    onChange={(e) => setNewBestiaryEntry(prev => ({ ...prev, armorClass: parseInt(e.target.value) || 10 }))}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-amber-900 mb-2">
+                    Puntos de Vida
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={newBestiaryEntry.hitPoints.maximum}
+                    onChange={(e) => {
+                      const hp = parseInt(e.target.value) || 10;
+                      setNewBestiaryEntry(prev => ({ 
+                        ...prev, 
+                        hitPoints: { current: hp, maximum: hp, temporary: 0 }
+                      }));
+                    }}
+                    className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-amber-900 mb-2">
+                  Descripción
+                </label>
+                <textarea
+                  value={newBestiaryEntry.description}
+                  onChange={(e) => setNewBestiaryEntry(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent h-20"
+                  placeholder="Descripción de la criatura..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-amber-900 mb-2">
+                  Habilidades (separadas por comas)
+                </label>
+                <input
+                  type="text"
+                  value={newBestiaryEntry.abilities.join(', ')}
+                  onChange={(e) => setNewBestiaryEntry(prev => ({ 
+                    ...prev, 
+                    abilities: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                  }))}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Ej: Mordisco, Garra, Rugido Aterrador"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowAddToBestiaryModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddToBestiary}
+                  disabled={!newBestiaryEntry.name.trim()}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Agregar al Bestiario
                 </button>
               </div>
             </div>

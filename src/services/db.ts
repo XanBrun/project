@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { Character, Campaign, DiceRoll, GameSession, NPC, Location, CampaignSession, CombatEncounter, MapData, Shop, Transaction } from '../types';
+import { Character, Campaign, DiceRoll, GameSession, NPC, Location, CampaignSession, CombatEncounter, MapData, Shop, Transaction, NPCTemplate } from '../types';
 
 // Configure localforage
 localforage.config({
@@ -145,6 +145,30 @@ export const deleteNPC = async (id: string): Promise<void> => {
   const npcs = await loadNPCs();
   const filteredNPCs = npcs.filter(n => n.id !== id);
   await saveData('npcs', filteredNPCs);
+};
+
+// NPCTemplate functions
+export const saveNPCTemplate = async (template: NPCTemplate): Promise<void> => {
+  const templates = await loadNPCTemplates();
+  const existingIndex = templates.findIndex(t => t.id === template.id);
+  
+  if (existingIndex >= 0) {
+    templates[existingIndex] = { ...template, updatedAt: Date.now() };
+  } else {
+    templates.push({ ...template, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  
+  await saveData('npcTemplates', templates);
+};
+
+export const loadNPCTemplates = async (): Promise<NPCTemplate[]> => {
+  return (await loadData<NPCTemplate[]>('npcTemplates')) || [];
+};
+
+export const deleteNPCTemplate = async (id: string): Promise<void> => {
+  const templates = await loadNPCTemplates();
+  const filteredTemplates = templates.filter(t => t.id !== id);
+  await saveData('npcTemplates', filteredTemplates);
 };
 
 // Location functions
@@ -346,6 +370,7 @@ export const exportData = async (): Promise<string> => {
     characters: await loadCharacters(),
     campaigns: await loadCampaigns(),
     npcs: await loadNPCs(),
+    npcTemplates: await loadNPCTemplates(),
     locations: await loadLocations(),
     campaignSessions: await loadCampaignSessions(),
     combatEncounters: await loadCombatEncounters(),
