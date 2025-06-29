@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Users as Horse, Target, Gem, Book, Sparkles, Home, Crown } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Target, Gem, Book, Sparkles, Home, Crown } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
@@ -48,6 +48,7 @@ function ShopPage() {
         loadCharacters()
       ]);
 
+      console.log('Loaded shops:', shopsData);
       setShops(shopsData);
       setCharacters(charactersData);
 
@@ -69,7 +70,7 @@ function ShopPage() {
       'magic_shop': Sparkles,
       'general_store': Package,
       'blacksmith': Hammer,
-      'market': Horse,
+      'market': Package,
       'alchemist': Zap,
       'tavern': Home,
       'temple': Crown,
@@ -376,6 +377,12 @@ function ShopPage() {
             </div>
           </div>
         )}
+
+        {/* Debug Info */}
+        <div className="mt-4 text-sm text-gray-600">
+          <p>Tiendas cargadas: {shops.length}</p>
+          {selectedShop && <p>Objetos en tienda seleccionada: {selectedShop.items.length}</p>}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -415,6 +422,9 @@ function ShopPage() {
                       <span className="text-amber-600">{shop.reputation}%</span>
                     </div>
                   </div>
+                  <div className="mt-2 text-xs text-amber-500">
+                    {shop.items.length} objetos disponibles
+                  </div>
                   {shop.discountPercentage > 0 && (
                     <div className="mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full inline-block">
                       {shop.discountPercentage}% descuento
@@ -435,6 +445,9 @@ function ShopPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-amber-900">{selectedShop.name}</h2>
                   <p className="text-amber-700">{selectedShop.description}</p>
+                  <p className="text-sm text-amber-600 mt-1">
+                    {selectedShop.items.length} objetos • Atendido por {selectedShop.keeper}
+                  </p>
                 </div>
               </div>
 
@@ -479,16 +492,24 @@ function ShopPage() {
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
                   <p className="text-amber-600 text-lg">No se encontraron objetos</p>
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setCategoryFilter('');
-                      setRarityFilter('');
-                    }}
-                    className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                  >
-                    Limpiar Filtros
-                  </button>
+                  <p className="text-amber-500 text-sm mb-4">
+                    {searchTerm || categoryFilter || rarityFilter 
+                      ? 'Intenta ajustar los filtros de búsqueda'
+                      : 'Esta tienda no tiene objetos disponibles'
+                    }
+                  </p>
+                  {(searchTerm || categoryFilter || rarityFilter) && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setCategoryFilter('');
+                        setRarityFilter('');
+                      }}
+                      className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                    >
+                      Limpiar Filtros
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
