@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Target, Gem, Book, Sparkles, Home, Crown, ChevronDown, Store } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Users, ArrowLeft, X, Check, AlertCircle, Eye, Sword, Shield, Zap, Scroll, Hammer, Target, Gem, Book, Sparkles, Home, Crown, ChevronDown, Store, RefreshCw } from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
@@ -27,6 +27,7 @@ function ShopPage() {
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -43,23 +44,72 @@ function ShopPage() {
 
   const loadData = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Loading shop data...');
+      
       const [shopsData, charactersData] = await Promise.all([
         loadShops(),
         loadCharacters()
       ]);
 
-      console.log('Loaded shops:', shopsData);
-      setShops(shopsData);
+      console.log('Shops loaded:', shopsData.length);
+      console.log('Characters loaded:', charactersData.length);
+
+      // Validar que las tiendas tengan datos válidos
+      const validShops = shopsData.filter(shop => {
+        if (!shop || !shop.id || !shop.name || !shop.items || !Array.isArray(shop.items)) {
+          console.warn('Invalid shop detected:', shop);
+          return false;
+        }
+        return true;
+      });
+
+      if (validShops.length === 0) {
+        throw new Error('No se encontraron tiendas válidas');
+      }
+
+      setShops(validShops);
       setCharacters(charactersData);
 
-      // Set first shop as selected by default
-      if (shopsData.length > 0) {
-        setSelectedShop(shopsData[0]);
+      // Seleccionar la primera tienda válida por defecto
+      if (validShops.length > 0) {
+        console.log('Setting default shop:', validShops[0].name);
+        setSelectedShop(validShops[0]);
       }
+
     } catch (error) {
       console.error('Error loading shop data:', error);
+      setError('Error al cargar los datos de la tienda. Por favor, recarga la página.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShopChange = (shopId: string) => {
+    console.log('Changing shop to:', shopId);
+    
+    if (!shopId) {
+      setSelectedShop(null);
+      return;
+    }
+
+    const shop = shops.find(s => s.id === shopId);
+    if (shop) {
+      console.log('Shop found:', shop.name, 'Items:', shop.items.length);
+      setSelectedShop(shop);
+      
+      // Limpiar filtros al cambiar de tienda
+      setSearchTerm('');
+      setCategoryFilter('');
+      setRarityFilter('');
+      
+      // Limpiar carrito al cambiar de tienda
+      setCart([]);
+    } else {
+      console.warn('Shop not found for ID:', shopId);
+      setSelectedShop(null);
     }
   };
 
@@ -100,21 +150,33 @@ function ShopPage() {
   };
 
   const addToCart = (item: ShopItem, quantity: number = 1) => {
+    if (!selectedShop) {
+      console.warn('No shop selected');
+      return;
+    }
+
+    console.log('Adding to cart:', item.name, 'Quantity:', quantity);
+    
     setCart(prevCart => {
       const existingItem = prevCart.find(cartItem => cartItem.item.id === item.id);
       if (existingItem) {
+        const newQuantity = Math.min(existingItem.quantity + quantity, item.inStock);
+        console.log('Updating existing item quantity:', newQuantity);
         return prevCart.map(cartItem =>
           cartItem.item.id === item.id
-            ? { ...cartItem, quantity: Math.min(cartItem.quantity + quantity, item.inStock) }
+            ? { ...cartItem, quantity: newQuantity }
             : cartItem
         );
       } else {
-        return [...prevCart, { item, quantity: Math.min(quantity, item.inStock) }];
+        const newQuantity = Math.min(quantity, item.inStock);
+        console.log('Adding new item with quantity:', newQuantity);
+        return [...prevCart, { item, quantity: newQuantity }];
       }
     });
   };
 
   const removeFromCart = (itemId: string) => {
+    console.log('Removing from cart:', itemId);
     setCart(prevCart => prevCart.filter(cartItem => cartItem.item.id !== itemId));
   };
 
@@ -196,7 +258,10 @@ function ShopPage() {
   };
 
   const handlePurchase = async () => {
-    if (!selectedCharacter || cart.length === 0) return;
+    if (!selectedCharacter || cart.length === 0 || !selectedShop) {
+      console.warn('Missing requirements for purchase');
+      return;
+    }
 
     const totalCost = calculateTotalCost();
     
@@ -206,6 +271,8 @@ function ShopPage() {
     }
 
     try {
+      console.log('Processing purchase...');
+      
       // Deduct currency from character
       const newCurrency = deductCurrency(selectedCharacter.currency, totalCost);
       
@@ -229,30 +296,28 @@ function ShopPage() {
       setSelectedCharacter(updatedCharacter);
 
       // Update shop inventory
-      if (selectedShop) {
-        const updatedItems = selectedShop.items.map(item => {
-          const cartItem = cart.find(ci => ci.item.id === item.id);
-          if (cartItem) {
-            return { ...item, inStock: item.inStock - cartItem.quantity };
-          }
-          return item;
-        });
+      const updatedItems = selectedShop.items.map(item => {
+        const cartItem = cart.find(ci => ci.item.id === item.id);
+        if (cartItem) {
+          return { ...item, inStock: item.inStock - cartItem.quantity };
+        }
+        return item;
+      });
 
-        const updatedShop = { ...selectedShop, items: updatedItems, updatedAt: Date.now() };
-        await saveShop(updatedShop);
-        setSelectedShop(updatedShop);
-        
-        // Update shops list
-        setShops(prevShops => 
-          prevShops.map(shop => shop.id === updatedShop.id ? updatedShop : shop)
-        );
-      }
+      const updatedShop = { ...selectedShop, items: updatedItems, updatedAt: Date.now() };
+      await saveShop(updatedShop);
+      setSelectedShop(updatedShop);
+      
+      // Update shops list
+      setShops(prevShops => 
+        prevShops.map(shop => shop.id === updatedShop.id ? updatedShop : shop)
+      );
 
       // Save transaction
       const transaction: Transaction = {
         id: generateId(),
         characterId: selectedCharacter.id,
-        shopId: selectedShop!.id,
+        shopId: selectedShop.id,
         items: cart,
         totalCost,
         timestamp: Date.now(),
@@ -267,6 +332,7 @@ function ShopPage() {
       setShowCheckout(false);
 
       alert('¡Compra realizada con éxito!');
+      console.log('Purchase completed successfully');
     } catch (error) {
       console.error('Error processing purchase:', error);
       alert('Error al procesar la compra');
@@ -306,6 +372,27 @@ function ShopPage() {
           <div className="text-center">
             <div className="animate-spin w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-amber-700">Cargando tiendas...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-red-200">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-900 mb-2">Error al cargar las tiendas</h2>
+            <p className="text-red-700 mb-6">{error}</p>
+            <button
+              onClick={loadData}
+              className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors mx-auto"
+            >
+              <RefreshCw size={18} />
+              <span>Reintentar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -353,20 +440,13 @@ function ShopPage() {
             <div className="relative">
               <select
                 value={selectedShop?.id || ''}
-                onChange={(e) => {
-                  const shop = shops.find(s => s.id === e.target.value);
-                  setSelectedShop(shop || null);
-                  // Clear filters when changing shops
-                  setSearchTerm('');
-                  setCategoryFilter('');
-                  setRarityFilter('');
-                }}
+                onChange={(e) => handleShopChange(e.target.value)}
                 className="w-full p-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white appearance-none pr-10"
               >
                 <option value="">Elige una tienda...</option>
                 {shops.map(shop => (
                   <option key={shop.id} value={shop.id}>
-                    {shop.name} - {SHOP_TYPE_NAMES[shop.type]} ({shop.items.length} objetos)
+                    {shop.name} - {SHOP_TYPE_NAMES[shop.type]} ({shop.items?.length || 0} objetos)
                   </option>
                 ))}
               </select>
@@ -443,7 +523,7 @@ function ShopPage() {
                 <h3 className="text-xl font-bold text-amber-900">{selectedShop.name}</h3>
                 <p className="text-amber-700">{selectedShop.description}</p>
                 <p className="text-sm text-amber-600 mt-1">
-                  {SHOP_TYPE_NAMES[selectedShop.type]} • {selectedShop.items.length} objetos disponibles
+                  {SHOP_TYPE_NAMES[selectedShop.type]} • {selectedShop.items?.length || 0} objetos disponibles
                 </p>
               </div>
             </div>

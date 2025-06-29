@@ -399,44 +399,88 @@ export const deleteMap = async (id: string): Promise<void> => {
   await saveData('maps', filteredMaps);
 };
 
-// Shop functions
+// Shop functions - CORREGIDAS
 export const saveShop = async (shop: Shop): Promise<void> => {
-  const shops = await loadShops();
-  const existingIndex = shops.findIndex(s => s.id === shop.id);
-  
-  if (existingIndex >= 0) {
-    shops[existingIndex] = { ...shop, updatedAt: Date.now() };
-  } else {
-    shops.push({ ...shop, createdAt: Date.now(), updatedAt: Date.now() });
+  try {
+    const shops = await loadShops();
+    const existingIndex = shops.findIndex(s => s.id === shop.id);
+    
+    if (existingIndex >= 0) {
+      shops[existingIndex] = { ...shop, updatedAt: Date.now() };
+    } else {
+      shops.push({ ...shop, createdAt: Date.now(), updatedAt: Date.now() });
+    }
+    
+    await saveData('shops', shops);
+    console.log('Shop saved successfully:', shop.name);
+  } catch (error) {
+    console.error('Error saving shop:', error);
+    throw error;
   }
-  
-  await saveData('shops', shops);
 };
 
 export const loadShops = async (): Promise<Shop[]> => {
-  const shops = await loadData<Shop[]>('shops');
-  if (!shops || shops.length === 0) {
-    // Create default shops if none exist
+  try {
+    console.log('Loading shops from storage...');
+    let shops = await loadData<Shop[]>('shops');
+    
+    // Si no hay tiendas o el array está vacío, crear tiendas por defecto
+    if (!shops || shops.length === 0) {
+      console.log('No shops found, creating default shops...');
+      const defaultShops = await createDefaultShops();
+      await saveData('shops', defaultShops);
+      console.log('Default shops created:', defaultShops.length);
+      return defaultShops;
+    }
+    
+    // Validar que todas las tiendas tengan la estructura correcta
+    shops = shops.filter(shop => {
+      if (!shop.id || !shop.name || !shop.items || !Array.isArray(shop.items)) {
+        console.warn('Invalid shop found and filtered out:', shop);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log('Shops loaded successfully:', shops.length);
+    return shops;
+  } catch (error) {
+    console.error('Error loading shops:', error);
+    // En caso de error, crear tiendas por defecto
     const defaultShops = await createDefaultShops();
     await saveData('shops', defaultShops);
     return defaultShops;
   }
-  return shops;
 };
 
 export const loadShop = async (id: string): Promise<Shop | null> => {
-  const shops = await loadShops();
-  return shops.find(s => s.id === id) || null;
+  try {
+    const shops = await loadShops();
+    const shop = shops.find(s => s.id === id) || null;
+    console.log('Shop loaded:', shop ? shop.name : 'Not found');
+    return shop;
+  } catch (error) {
+    console.error('Error loading shop:', error);
+    return null;
+  }
 };
 
 export const deleteShop = async (id: string): Promise<void> => {
-  const shops = await loadShops();
-  const filteredShops = shops.filter(s => s.id !== id);
-  await saveData('shops', filteredShops);
+  try {
+    const shops = await loadShops();
+    const filteredShops = shops.filter(s => s.id !== id);
+    await saveData('shops', filteredShops);
+    console.log('Shop deleted successfully');
+  } catch (error) {
+    console.error('Error deleting shop:', error);
+    throw error;
+  }
 };
 
 const createDefaultShops = async (): Promise<Shop[]> => {
-  return [
+  console.log('Creating default shops...');
+  
+  const defaultShops: Shop[] = [
     {
       id: generateId(),
       name: "Armería del Dragón de Hierro",
@@ -948,6 +992,9 @@ const createDefaultShops = async (): Promise<Shop[]> => {
       ]
     }
   ];
+  
+  console.log('Default shops created:', defaultShops.length);
+  return defaultShops;
 };
 
 // Transaction functions
