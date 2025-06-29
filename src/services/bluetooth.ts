@@ -76,7 +76,12 @@ class BluetoothService {
 
       return this.device;
     } catch (error) {
-      console.error('Error requesting Bluetooth device:', error);
+      // Handle user cancellation as a warning, not an error
+      if (error.name === 'NotFoundError') {
+        console.warn('User cancelled Bluetooth device selection');
+      } else {
+        console.error('Error requesting Bluetooth device:', error);
+      }
       throw error;
     }
   }
