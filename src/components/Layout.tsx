@@ -7,7 +7,7 @@ import { useBluetoothStore } from '../stores/bluetoothStore';
 const navigation = [
   { name: 'Inicio', href: '/', icon: Home },
   { name: 'Crear Personaje', href: '/character/create', icon: UserPlus },
-  { name: 'Personajes', href: '/character/1', icon: Users },
+  { name: 'Personajes', href: '/characters', icon: Users },
   { name: 'Campañas', href: '/campaigns', icon: Users },
   { name: 'Dados', href: '/dice', icon: Dice6 },
   { name: 'Combate', href: '/combat', icon: Sword },
@@ -38,7 +38,8 @@ function Layout() {
         {/* Navigation */}
         <nav className="p-4 space-y-2">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || 
+              (item.href === '/characters' && location.pathname.startsWith('/character'));
             const Icon = item.icon;
             
             return (
@@ -102,7 +103,10 @@ function Layout() {
         <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-amber-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-amber-900">
-              {navigation.find(item => item.href === location.pathname)?.name || 'D&D Companion'}
+              {navigation.find(item => 
+                item.href === location.pathname || 
+                (item.href === '/characters' && location.pathname.startsWith('/character'))
+              )?.name || 'D&D Companion'}
             </h1>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
