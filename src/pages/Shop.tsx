@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, Package, Eye, X, Check, ArrowLeft, Sword, Shield, Zap, Heart, Book, Gem, Hammer, Bot as Bow, Scroll, Option as Potion, Crown, Target, Feather, Anchor, Compass, Key, Lock, Flame, Snowflake, Wind, Mountain, Waves, Sun, Moon, TreePine } from 'lucide-react';
+import { 
+  ShoppingCart, Plus, Minus, Search, Filter, Star, Coins, 
+  Package, User, ArrowLeft, Check, X, Eye, EyeOff, Sword,
+  Shield, Zap, Wrench, Horse, Truck, Hammer, Gem, Scroll
+} from 'lucide-react';
 import { 
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
 } from '../services/db';
 import { 
   Shop, ShopItem, CartItem, Character, Transaction, Currency,
-  CURRENCY_CONVERSION, CURRENCY_NAMES, CURRENCY_SYMBOLS,
-  RARITY_COLORS, RARITY_NAMES, CATEGORY_NAMES
+  CURRENCY_CONVERSION, CURRENCY_NAMES, CURRENCY_SYMBOLS, RARITY_COLORS, RARITY_NAMES, CATEGORY_NAMES
 } from '../types';
 
 function ShopPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const characterId = searchParams.get('characterId');
-
   const [shops, setShops] = useState<Shop[]>([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-  const [character, setCharacter] = useState<Character | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -29,25 +31,35 @@ function ShopPage() {
 
   useEffect(() => {
     loadData();
-  }, [characterId]);
+  }, []);
+
+  useEffect(() => {
+    const characterId = searchParams.get('characterId');
+    if (characterId && characters.length > 0) {
+      const character = characters.find(c => c.id === characterId);
+      if (character) {
+        setSelectedCharacter(character);
+      }
+    }
+  }, [searchParams, characters]);
 
   const loadData = async () => {
     try {
-      let savedShops = await loadShops();
-      
-      if (!savedShops || savedShops.length === 0) {
-        savedShops = await createExampleShops();
-      }
-      
-      setShops(savedShops);
-      if (savedShops.length > 0) {
-        setSelectedShop(savedShops[0]);
+      const [shopsData, charactersData] = await Promise.all([
+        loadShops(),
+        loadCharacters()
+      ]);
+
+      if (shopsData.length === 0) {
+        await createExampleShops();
+      } else {
+        setShops(shopsData);
+        if (shopsData.length > 0) {
+          setSelectedShop(shopsData[0]);
+        }
       }
 
-      if (characterId) {
-        const char = await loadCharacter(characterId);
-        setCharacter(char);
-      }
+      setCharacters(charactersData);
     } catch (error) {
       console.error('Error loading shop data:', error);
     } finally {
@@ -55,40 +67,37 @@ function ShopPage() {
     }
   };
 
-  const createExampleShops = async (): Promise<Shop[]> => {
+  const createExampleShops = async () => {
     const exampleShops: Shop[] = [
       {
         id: generateId(),
         name: "Armería del Dragón de Hierro",
         description: "La mejor selección de armas y armaduras forjadas por maestros herreros",
-        type: 'weapon_shop',
-        location: "Distrito del Mercado",
-        keeper: "Thorek Martillo de Hierro",
+        type: "weapon_shop",
+        location: "Plaza del Mercado",
+        keeper: "Thorin Martillo de Hierro",
         discountPercentage: 0,
         reputation: 95,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
         items: [
-          // Armas Cuerpo a Cuerpo
           {
             id: generateId(),
             name: "Espada Larga",
-            description: "Una espada versátil y equilibrada, favorita de muchos aventureros.",
-            category: 'weapon',
-            rarity: 'common',
+            description: "Una espada versátil de una mano con hoja recta y doble filo",
+            category: "weapon",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 15, platinum: 0 },
             weight: 3,
             properties: ["Versátil (1d10)"],
             damage: "1d8 cortante",
             inStock: 8,
-            tags: ["espada", "cuerpo a cuerpo", "versátil"]
+            tags: ["espada", "una mano", "versátil"]
           },
           {
             id: generateId(),
             name: "Espada Larga +1",
-            description: "Una espada larga encantada que brilla con una luz tenue azulada.",
-            category: 'magic_item',
-            rarity: 'uncommon',
+            description: "Una espada larga mágica con encantamientos de precisión",
+            category: "weapon",
+            rarity: "uncommon",
             price: { copper: 0, silver: 0, electrum: 0, gold: 500, platinum: 0 },
             weight: 3,
             properties: ["Versátil (1d10)", "Mágica +1"],
@@ -99,143 +108,61 @@ function ShopPage() {
           {
             id: generateId(),
             name: "Hacha de Batalla",
-            description: "Un arma pesada y devastadora para guerreros experimentados.",
-            category: 'weapon',
-            rarity: 'common',
+            description: "Un hacha pesada de dos manos perfecta para guerreros",
+            category: "weapon",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 10, platinum: 0 },
             weight: 4,
-            properties: ["Versátil (1d10)"],
-            damage: "1d8 cortante",
+            properties: ["Dos manos", "Pesada"],
+            damage: "1d12 cortante",
             inStock: 5,
-            tags: ["hacha", "cuerpo a cuerpo", "versátil"]
+            tags: ["hacha", "dos manos", "pesada"]
           },
-          {
-            id: generateId(),
-            name: "Martillo de Guerra",
-            description: "Un martillo pesado diseñado para aplastar armaduras.",
-            category: 'weapon',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 15, platinum: 0 },
-            weight: 2,
-            properties: ["Versátil (1d10)"],
-            damage: "1d8 contundente",
-            inStock: 4,
-            tags: ["martillo", "cuerpo a cuerpo", "versátil"]
-          },
-          {
-            id: generateId(),
-            name: "Daga",
-            description: "Una hoja corta y afilada, perfecta para combate sigiloso.",
-            category: 'weapon',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 2, platinum: 0 },
-            weight: 1,
-            properties: ["Arrojadiza (20/60)", "Sutil", "Ligera"],
-            damage: "1d4 perforante",
-            inStock: 15,
-            tags: ["daga", "ligera", "arrojadiza"]
-          },
-          {
-            id: generateId(),
-            name: "Cimitarra",
-            description: "Una espada curva y elegante, favorita de duelistas.",
-            category: 'weapon',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
-            weight: 3,
-            properties: ["Sutil", "Ligera"],
-            damage: "1d6 cortante",
-            inStock: 6,
-            tags: ["espada", "sutil", "ligera"]
-          },
-          // Armas a Distancia
           {
             id: generateId(),
             name: "Arco Largo",
-            description: "Un arco poderoso con gran alcance y precisión.",
-            category: 'weapon',
-            rarity: 'common',
+            description: "Arco de madera élfica para arqueros expertos",
+            category: "weapon",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 50, platinum: 0 },
             weight: 2,
-            properties: ["Munición (150/600)", "Pesada", "Dos manos"],
+            properties: ["Dos manos", "Munición", "Pesada", "Alcance (150/600)"],
             damage: "1d8 perforante",
-            inStock: 4,
-            tags: ["arco", "distancia", "dos manos"]
+            inStock: 6,
+            tags: ["arco", "distancia", "élfico"]
           },
-          {
-            id: generateId(),
-            name: "Ballesta Ligera",
-            description: "Una ballesta compacta y fácil de usar.",
-            category: 'weapon',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
-            weight: 5,
-            properties: ["Munición (80/320)", "Carga"],
-            damage: "1d8 perforante",
-            inStock: 3,
-            tags: ["ballesta", "distancia", "carga"]
-          },
-          // Armaduras
           {
             id: generateId(),
             name: "Armadura de Cuero",
-            description: "Armadura ligera hecha de cuero endurecido.",
-            category: 'armor',
-            rarity: 'common',
+            description: "Armadura ligera hecha de cuero endurecido",
+            category: "armor",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 10, platinum: 0 },
             weight: 10,
-            properties: ["Armadura Ligera"],
+            properties: ["Ligera"],
             armorClass: 11,
-            inStock: 6,
+            inStock: 10,
             tags: ["armadura", "ligera", "cuero"]
           },
           {
             id: generateId(),
-            name: "Armadura de Cuero Tachonado",
-            description: "Armadura de cuero reforzada con tachuelas metálicas.",
-            category: 'armor',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 45, platinum: 0 },
-            weight: 13,
-            properties: ["Armadura Ligera"],
-            armorClass: 12,
-            inStock: 4,
-            tags: ["armadura", "ligera", "tachonado"]
-          },
-          {
-            id: generateId(),
             name: "Cota de Malla",
-            description: "Armadura hecha de anillos metálicos entrelazados.",
-            category: 'armor',
-            rarity: 'common',
+            description: "Armadura media de anillos entrelazados",
+            category: "armor",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 75, platinum: 0 },
             weight: 20,
-            properties: ["Armadura Media"],
+            properties: ["Media"],
             armorClass: 13,
-            inStock: 3,
+            inStock: 4,
             tags: ["armadura", "media", "malla"]
           },
           {
             id: generateId(),
-            name: "Armadura de Placas",
-            description: "La mejor protección disponible, hecha de placas de acero.",
-            category: 'armor',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 1500, platinum: 0 },
-            weight: 65,
-            properties: ["Armadura Pesada"],
-            armorClass: 18,
-            requirements: "Fue 13",
-            inStock: 1,
-            tags: ["armadura", "pesada", "placas"]
-          },
-          // Escudos
-          {
-            id: generateId(),
             name: "Escudo",
-            description: "Un escudo de madera reforzado con metal.",
-            category: 'shield',
-            rarity: 'common',
+            description: "Escudo de madera reforzado con metal",
+            category: "shield",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 10, platinum: 0 },
             weight: 6,
             properties: ["+2 CA"],
@@ -243,214 +170,125 @@ function ShopPage() {
             inStock: 8,
             tags: ["escudo", "defensa", "madera"]
           }
-        ]
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       },
       {
         id: generateId(),
         name: "Pociones y Pergaminos de Elara",
         description: "Objetos mágicos, pociones curativas y pergaminos de hechizos",
-        type: 'magic_shop',
-        location: "Torre de los Magos",
+        type: "magic_shop",
+        location: "Distrito Mágico",
         keeper: "Elara Lunaverde",
         discountPercentage: 5,
         reputation: 88,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
         items: [
-          // Pociones
           {
             id: generateId(),
             name: "Poción de Curación",
-            description: "Una poción roja que restaura 2d4+2 puntos de vida.",
-            category: 'consumable',
-            rarity: 'common',
+            description: "Restaura 2d4+2 puntos de vida al consumirla",
+            category: "consumable",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 50, platinum: 0 },
             weight: 0.5,
-            properties: ["Curación 2d4+2", "Acción para beber"],
-            inStock: 12,
-            tags: ["poción", "curación", "consumible"]
+            properties: ["Consumible", "Curación"],
+            inStock: 15,
+            tags: ["poción", "curación", "salud"]
           },
           {
             id: generateId(),
             name: "Poción de Curación Mayor",
-            description: "Una poción carmesí que restaura 4d4+4 puntos de vida.",
-            category: 'consumable',
-            rarity: 'uncommon',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 150, platinum: 0 },
+            description: "Restaura 4d4+4 puntos de vida al consumirla",
+            category: "consumable",
+            rarity: "uncommon",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 200, platinum: 0 },
             weight: 0.5,
-            properties: ["Curación 4d4+4", "Acción para beber"],
-            inStock: 6,
+            properties: ["Consumible", "Curación Mayor"],
+            inStock: 8,
             tags: ["poción", "curación", "mayor"]
           },
           {
             id: generateId(),
-            name: "Poción de Fuerza de Gigante",
-            description: "Otorga Fuerza 21 durante 1 hora.",
-            category: 'consumable',
-            rarity: 'rare',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 400, platinum: 0 },
-            weight: 0.5,
-            properties: ["Fuerza 21", "Duración 1 hora"],
-            inStock: 2,
-            tags: ["poción", "fuerza", "mejora"]
-          },
-          {
-            id: generateId(),
-            name: "Poción de Invisibilidad",
-            description: "Te vuelve invisible durante 1 hora.",
-            category: 'consumable',
-            rarity: 'very_rare',
+            name: "Varita de Misiles Mágicos",
+            description: "Varita con 7 cargas que lanza misiles mágicos",
+            category: "magic_item",
+            rarity: "uncommon",
             price: { copper: 0, silver: 0, electrum: 0, gold: 800, platinum: 0 },
-            weight: 0.5,
-            properties: ["Invisibilidad", "Duración 1 hora"],
-            inStock: 1,
-            tags: ["poción", "invisibilidad", "sigilo"]
-          },
-          // Pergaminos
-          {
-            id: generateId(),
-            name: "Pergamino de Misiles Mágicos",
-            description: "Pergamino que contiene el hechizo Misiles Mágicos (1er nivel).",
-            category: 'consumable',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
-            weight: 0,
-            properties: ["Hechizo nivel 1", "Un uso"],
-            inStock: 8,
-            tags: ["pergamino", "hechizo", "daño"]
+            weight: 1,
+            properties: ["Varita", "7 cargas", "Recarga al amanecer"],
+            inStock: 3,
+            tags: ["varita", "misiles", "mágico"]
           },
           {
             id: generateId(),
             name: "Pergamino de Curar Heridas",
-            description: "Pergamino que contiene el hechizo Curar Heridas (1er nivel).",
-            category: 'consumable',
-            rarity: 'common',
+            description: "Pergamino que contiene el hechizo Curar Heridas",
+            category: "consumable",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
             weight: 0,
-            properties: ["Hechizo nivel 1", "Un uso"],
-            inStock: 10,
-            tags: ["pergamino", "curación", "divino"]
-          },
-          {
-            id: generateId(),
-            name: "Pergamino de Bola de Fuego",
-            description: "Pergamino que contiene el hechizo Bola de Fuego (3er nivel).",
-            category: 'consumable',
-            rarity: 'uncommon',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 150, platinum: 0 },
-            weight: 0,
-            properties: ["Hechizo nivel 3", "Un uso"],
-            inStock: 3,
-            tags: ["pergamino", "fuego", "área"]
-          },
-          // Objetos Mágicos
-          {
-            id: generateId(),
-            name: "Varita de Misiles Mágicos",
-            description: "Varita con 7 cargas que se regeneran al amanecer.",
-            category: 'magic_item',
-            rarity: 'uncommon',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 800, platinum: 0 },
-            weight: 1,
-            properties: ["7 cargas", "Regenera 1d6+1 al amanecer"],
-            inStock: 2,
-            tags: ["varita", "mágica", "cargas"]
+            properties: ["Pergamino", "Nivel 1", "Un uso"],
+            inStock: 12,
+            tags: ["pergamino", "curación", "hechizo"]
           },
           {
             id: generateId(),
             name: "Anillo de Protección",
-            description: "Otorga +1 a CA y tiradas de salvación.",
-            category: 'magic_item',
-            rarity: 'rare',
+            description: "Anillo que otorga +1 a CA y tiradas de salvación",
+            category: "magic_item",
+            rarity: "rare",
             price: { copper: 0, silver: 0, electrum: 0, gold: 2000, platinum: 0 },
             weight: 0,
-            properties: ["+1 CA", "+1 Salvaciones"],
+            properties: ["+1 CA", "+1 Salvaciones", "Requiere Sintonización"],
             inStock: 1,
-            tags: ["anillo", "protección", "defensa"]
+            tags: ["anillo", "protección", "sintonización"]
           },
-          {
-            id: generateId(),
-            name: "Capa de Élfico",
-            description: "Otorga ventaja en tiradas de Sigilo.",
-            category: 'magic_item',
-            rarity: 'uncommon',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 600, platinum: 0 },
-            weight: 1,
-            properties: ["Ventaja en Sigilo"],
-            inStock: 2,
-            tags: ["capa", "sigilo", "élfico"]
-          },
-          {
-            id: generateId(),
-            name: "Botas de Velocidad",
-            description: "Duplica tu velocidad durante 10 minutos (1 vez por día).",
-            category: 'magic_item',
-            rarity: 'rare',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 1500, platinum: 0 },
-            weight: 1,
-            properties: ["Velocidad x2", "10 min/día"],
-            inStock: 1,
-            tags: ["botas", "velocidad", "movimiento"]
-          },
-          // Componentes Mágicos
           {
             id: generateId(),
             name: "Polvo de Diamante",
-            description: "Componente material para hechizos de resurrección.",
-            category: 'trade_good',
-            rarity: 'rare',
+            description: "Componente material para hechizos de resurrección",
+            category: "consumable",
+            rarity: "rare",
             price: { copper: 0, silver: 0, electrum: 0, gold: 300, platinum: 0 },
             weight: 0,
-            properties: ["Componente material", "300 gp de valor"],
-            inStock: 3,
-            tags: ["componente", "diamante", "resurrección"]
-          },
-          {
-            id: generateId(),
-            name: "Perla",
-            description: "Componente material para el hechizo Identificar.",
-            category: 'trade_good',
-            rarity: 'uncommon',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 100, platinum: 0 },
-            weight: 0,
-            properties: ["Componente material", "100 gp de valor"],
+            properties: ["Componente Material", "300 gp de valor"],
             inStock: 5,
-            tags: ["componente", "perla", "identificar"]
+            tags: ["componente", "diamante", "resurrección"]
           }
-        ]
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       },
       {
         id: generateId(),
         name: "Suministros del Aventurero",
         description: "Todo lo que necesitas para tus aventuras: equipo, herramientas y suministros",
-        type: 'general_store',
-        location: "Plaza Central",
-        keeper: "Marcus el Comerciante",
+        type: "general_store",
+        location: "Entrada de la Ciudad",
+        keeper: "Marcus Bolsaverde",
         discountPercentage: 10,
         reputation: 92,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
         items: [
-          // Equipo de Aventura
           {
             id: generateId(),
             name: "Mochila",
-            description: "Una mochila resistente para llevar tu equipo.",
-            category: 'adventuring_gear',
-            rarity: 'common',
+            description: "Mochila de cuero resistente con múltiples compartimentos",
+            category: "adventuring_gear",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 2, platinum: 0 },
             weight: 5,
             properties: ["Capacidad 30 libras"],
             inStock: 20,
-            tags: ["mochila", "almacenamiento", "equipo"]
+            tags: ["mochila", "equipo", "almacenamiento"]
           },
           {
             id: generateId(),
             name: "Cuerda de Cáñamo (50 pies)",
-            description: "Cuerda resistente de 50 pies de longitud.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 2, platinum: 0 },
+            description: "Cuerda resistente de cáñamo trenzado",
+            category: "adventuring_gear",
+            rarity: "common",
+            price: { copper: 0, silver: 20, electrum: 0, gold: 0, platinum: 0 },
             weight: 10,
             properties: ["50 pies", "Resistente"],
             inStock: 15,
@@ -458,253 +296,335 @@ function ShopPage() {
           },
           {
             id: generateId(),
-            name: "Antorcha",
-            description: "Proporciona luz brillante en un radio de 20 pies.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 1, silver: 0, electrum: 0, gold: 0, platinum: 0 },
-            weight: 1,
-            properties: ["Luz 20 pies", "Duración 1 hora"],
-            inStock: 50,
-            tags: ["antorcha", "luz", "fuego"]
-          },
-          {
-            id: generateId(),
-            name: "Linterna Sorda",
-            description: "Linterna que proyecta luz en un cono de 60 pies.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 5, platinum: 0 },
-            weight: 2,
-            properties: ["Luz cónica 60 pies", "Requiere aceite"],
-            inStock: 8,
-            tags: ["linterna", "luz", "aceite"]
-          },
-          {
-            id: generateId(),
-            name: "Aceite (frasco)",
-            description: "Aceite para linternas o como arma improvisada.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 1, electrum: 0, gold: 0, platinum: 0 },
-            weight: 1,
-            properties: ["Combustible", "Arrojadiza"],
-            inStock: 25,
-            tags: ["aceite", "combustible", "linterna"]
-          },
-          {
-            id: generateId(),
-            name: "Raciones (1 día)",
-            description: "Comida seca que se conserva bien durante viajes.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 2, electrum: 0, gold: 0, platinum: 0 },
-            weight: 2,
-            properties: ["Alimenta 1 día"],
-            inStock: 40,
-            tags: ["comida", "raciones", "supervivencia"]
-          },
-          {
-            id: generateId(),
-            name: "Odre",
-            description: "Recipiente para transportar agua u otros líquidos.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 2, electrum: 0, gold: 0, platinum: 0 },
-            weight: 5,
-            properties: ["Capacidad 4 pintas"],
-            inStock: 12,
-            tags: ["odre", "agua", "líquidos"]
-          },
-          {
-            id: generateId(),
-            name: "Saco de Dormir",
-            description: "Saco cómodo para dormir al aire libre.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 5, electrum: 0, gold: 0, platinum: 0 },
-            weight: 7,
-            properties: ["Cómodo", "Resistente al clima"],
-            inStock: 10,
-            tags: ["saco", "dormir", "descanso"]
-          },
-          // Herramientas
-          {
-            id: generateId(),
-            name: "Herramientas de Ladrón",
-            description: "Conjunto de ganzúas y herramientas para abrir cerraduras.",
-            category: 'tool',
-            rarity: 'common',
+            name: "Kit de Ladrón",
+            description: "Herramientas especializadas para abrir cerraduras",
+            category: "tool",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
             weight: 1,
-            properties: ["Competencia requerida"],
-            inStock: 5,
+            properties: ["Competencia en Herramientas"],
+            inStock: 6,
             tags: ["herramientas", "ladrón", "cerraduras"]
           },
           {
             id: generateId(),
-            name: "Kit de Herborista",
-            description: "Herramientas para identificar y usar plantas medicinales.",
-            category: 'tool',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 5, platinum: 0 },
-            weight: 3,
-            properties: ["Competencia requerida"],
-            inStock: 6,
-            tags: ["herramientas", "herborista", "plantas"]
+            name: "Raciones (1 día)",
+            description: "Comida seca que se conserva durante viajes largos",
+            category: "consumable",
+            rarity: "common",
+            price: { copper: 0, silver: 20, electrum: 0, gold: 0, platinum: 0 },
+            weight: 2,
+            properties: ["Alimenta 1 día"],
+            inStock: 50,
+            tags: ["comida", "ración", "viaje"]
           },
           {
             id: generateId(),
-            name: "Kit de Sanador",
-            description: "Vendas, ungüentos y férulas para primeros auxilios.",
-            category: 'tool',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 5, platinum: 0 },
-            weight: 3,
-            properties: ["10 usos", "Estabiliza moribundos"],
-            inStock: 8,
-            tags: ["sanador", "curación", "primeros auxilios"]
+            name: "Antorcha",
+            description: "Antorcha de madera que proporciona luz brillante",
+            category: "adventuring_gear",
+            rarity: "common",
+            price: { copper: 1, silver: 0, electrum: 0, gold: 0, platinum: 0 },
+            weight: 1,
+            properties: ["Luz brillante 20 pies", "Dura 1 hora"],
+            inStock: 100,
+            tags: ["luz", "antorcha", "fuego"]
           },
-          {
-            id: generateId(),
-            name: "Herramientas de Artesano (Herrero)",
-            description: "Herramientas especializadas para trabajar el metal.",
-            category: 'tool',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 20, platinum: 0 },
-            weight: 8,
-            properties: ["Competencia requerida"],
-            inStock: 3,
-            tags: ["herramientas", "herrero", "metal"]
-          },
-          // Munición
           {
             id: generateId(),
             name: "Flechas (20)",
-            description: "Flechas de calidad para arcos largos y cortos.",
-            category: 'ammunition',
-            rarity: 'common',
+            description: "Flechas de madera con puntas de hierro",
+            category: "ammunition",
+            rarity: "common",
             price: { copper: 0, silver: 0, electrum: 0, gold: 1, platinum: 0 },
             weight: 1,
-            properties: ["20 flechas"],
+            properties: ["Munición para arcos"],
             inStock: 30,
             tags: ["flechas", "munición", "arco"]
-          },
-          {
-            id: generateId(),
-            name: "Virotes de Ballesta (20)",
-            description: "Virotes para ballestas ligeras y pesadas.",
-            category: 'ammunition',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 1, platinum: 0 },
-            weight: 1.5,
-            properties: ["20 virotes"],
-            inStock: 25,
-            tags: ["virotes", "munición", "ballesta"]
-          },
-          {
-            id: generateId(),
-            name: "Balas de Honda (20)",
-            description: "Proyectiles de plomo para hondas.",
-            category: 'ammunition',
-            rarity: 'common',
-            price: { copper: 4, silver: 0, electrum: 0, gold: 0, platinum: 0 },
-            weight: 1.5,
-            properties: ["20 balas"],
-            inStock: 20,
-            tags: ["balas", "munición", "honda"]
-          },
-          // Objetos Diversos
-          {
-            id: generateId(),
-            name: "Espejo de Acero",
-            description: "Espejo pulido útil para señales o ver alrededor de esquinas.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 5, platinum: 0 },
-            weight: 0.5,
-            properties: ["Reflectante", "Señales"],
-            inStock: 6,
-            tags: ["espejo", "señales", "utilidad"]
-          },
-          {
-            id: generateId(),
-            name: "Cadena (10 pies)",
-            description: "Cadena de hierro resistente.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 5, platinum: 0 },
-            weight: 10,
-            properties: ["10 pies", "Hierro resistente"],
-            inStock: 4,
-            tags: ["cadena", "hierro", "restricción"]
-          },
-          {
-            id: generateId(),
-            name: "Candado",
-            description: "Candado de hierro con llave.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 10, platinum: 0 },
-            weight: 1,
-            properties: ["Incluye llave", "CD 15 para forzar"],
-            inStock: 8,
-            tags: ["candado", "seguridad", "llave"]
-          },
-          {
-            id: generateId(),
-            name: "Pergamino en Blanco",
-            description: "Pergamino de calidad para escribir hechizos o mapas.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 1, electrum: 0, gold: 0, platinum: 0 },
-            weight: 0,
-            properties: ["Calidad escribano"],
-            inStock: 15,
-            tags: ["pergamino", "escritura", "mapas"]
-          },
-          {
-            id: generateId(),
-            name: "Tinta y Pluma",
-            description: "Tinta negra y pluma para escribir.",
-            category: 'adventuring_gear',
-            rarity: 'common',
-            price: { copper: 0, silver: 0, electrum: 0, gold: 2, platinum: 0 },
-            weight: 0,
-            properties: ["Suficiente para muchas páginas"],
-            inStock: 12,
-            tags: ["tinta", "pluma", "escritura"]
           }
-        ]
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      {
+        id: generateId(),
+        name: "Herrería de Vulcano",
+        description: "Forja especializada en armas y armaduras de alta calidad",
+        type: "blacksmith",
+        location: "Distrito de Artesanos",
+        keeper: "Vulcano Forjahierro",
+        discountPercentage: 0,
+        reputation: 98,
+        items: [
+          {
+            id: generateId(),
+            name: "Martillo de Guerra",
+            description: "Martillo pesado forjado para el combate",
+            category: "weapon",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 15, platinum: 0 },
+            weight: 2,
+            properties: ["Versátil (1d10)"],
+            damage: "1d8 contundente",
+            inStock: 6,
+            tags: ["martillo", "guerra", "versátil"]
+          },
+          {
+            id: generateId(),
+            name: "Armadura de Placas",
+            description: "La mejor protección disponible, armadura completa de placas",
+            category: "armor",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 1500, platinum: 0 },
+            weight: 65,
+            properties: ["Pesada"],
+            armorClass: 18,
+            requirements: "Fuerza 15",
+            inStock: 2,
+            tags: ["armadura", "placas", "pesada"]
+          },
+          {
+            id: generateId(),
+            name: "Daga Maestra",
+            description: "Daga perfectamente balanceada por un maestro herrero",
+            category: "weapon",
+            rarity: "uncommon",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 100, platinum: 0 },
+            weight: 1,
+            properties: ["Sutil", "Arrojadiza (20/60)", "Ligera"],
+            damage: "1d4+1 perforante",
+            inStock: 4,
+            tags: ["daga", "maestra", "sutil"]
+          },
+          {
+            id: generateId(),
+            name: "Herramientas de Herrero",
+            description: "Conjunto completo de herramientas para trabajar el metal",
+            category: "tool",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 20, platinum: 0 },
+            weight: 8,
+            properties: ["Competencia en Herramientas"],
+            inStock: 8,
+            tags: ["herramientas", "herrero", "metal"]
+          },
+          {
+            id: generateId(),
+            name: "Yunque Portátil",
+            description: "Yunque pequeño para reparaciones en el campo",
+            category: "tool",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 50, platinum: 0 },
+            weight: 25,
+            properties: ["Reparaciones básicas"],
+            inStock: 3,
+            tags: ["yunque", "reparación", "portátil"]
+          }
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      {
+        id: generateId(),
+        name: "Establos de Rocinante",
+        description: "Monturas, carros y todo lo necesario para viajar",
+        type: "market",
+        location: "Afueras de la Ciudad",
+        keeper: "Elena Riendaveloz",
+        discountPercentage: 15,
+        reputation: 85,
+        items: [
+          {
+            id: generateId(),
+            name: "Caballo de Montar",
+            description: "Caballo entrenado para montar, dócil y resistente",
+            category: "mount",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 75, platinum: 0 },
+            weight: 0,
+            properties: ["Velocidad 60 pies", "Capacidad de carga 480 lb"],
+            inStock: 8,
+            tags: ["caballo", "montura", "viaje"]
+          },
+          {
+            id: generateId(),
+            name: "Caballo de Guerra",
+            description: "Caballo entrenado para el combate, valiente y fuerte",
+            category: "mount",
+            rarity: "uncommon",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 400, platinum: 0 },
+            weight: 0,
+            properties: ["Velocidad 60 pies", "Entrenado para combate", "Capacidad 540 lb"],
+            inStock: 3,
+            tags: ["caballo", "guerra", "combate"]
+          },
+          {
+            id: generateId(),
+            name: "Poni",
+            description: "Poni pequeño, ideal para halflings y gnomos",
+            category: "mount",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 30, platinum: 0 },
+            weight: 0,
+            properties: ["Velocidad 40 pies", "Capacidad de carga 225 lb"],
+            inStock: 6,
+            tags: ["poni", "pequeño", "halfling"]
+          },
+          {
+            id: generateId(),
+            name: "Carro",
+            description: "Carro de dos ruedas tirado por caballos",
+            category: "vehicle",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 15, platinum: 0 },
+            weight: 200,
+            properties: ["Capacidad 1000 lb", "Requiere animal de tiro"],
+            inStock: 4,
+            tags: ["carro", "transporte", "carga"]
+          },
+          {
+            id: generateId(),
+            name: "Carreta",
+            description: "Carreta grande de cuatro ruedas para cargas pesadas",
+            category: "vehicle",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 35, platinum: 0 },
+            weight: 400,
+            properties: ["Capacidad 2000 lb", "Requiere 2 animales de tiro"],
+            inStock: 2,
+            tags: ["carreta", "pesada", "comercio"]
+          },
+          {
+            id: generateId(),
+            name: "Silla de Montar",
+            description: "Silla de cuero cómoda para viajes largos",
+            category: "adventuring_gear",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 10, platinum: 0 },
+            weight: 25,
+            properties: ["Comodidad en viajes largos"],
+            inStock: 12,
+            tags: ["silla", "montar", "comodidad"]
+          },
+          {
+            id: generateId(),
+            name: "Alforjas",
+            description: "Bolsas que se cuelgan a los lados de la montura",
+            category: "adventuring_gear",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 4, platinum: 0 },
+            weight: 8,
+            properties: ["Capacidad adicional 60 lb"],
+            inStock: 15,
+            tags: ["alforjas", "almacenamiento", "montura"]
+          }
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      },
+      {
+        id: generateId(),
+        name: "Joyería de Gemas Brillantes",
+        description: "Joyas finas, gemas preciosas y objetos de valor",
+        type: "jeweler",
+        location: "Distrito Noble",
+        keeper: "Madame Esmeralda",
+        discountPercentage: 0,
+        reputation: 90,
+        items: [
+          {
+            id: generateId(),
+            name: "Anillo de Oro",
+            description: "Anillo de oro puro finamente trabajado",
+            category: "treasure",
+            rarity: "common",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 25, platinum: 0 },
+            weight: 0,
+            properties: ["Objeto de valor"],
+            inStock: 10,
+            tags: ["anillo", "oro", "joya"]
+          },
+          {
+            id: generateId(),
+            name: "Collar de Perlas",
+            description: "Collar con perlas del mar del norte",
+            category: "treasure",
+            rarity: "uncommon",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 100, platinum: 0 },
+            weight: 0,
+            properties: ["Objeto de valor", "Perlas genuinas"],
+            inStock: 5,
+            tags: ["collar", "perlas", "mar"]
+          },
+          {
+            id: generateId(),
+            name: "Rubí",
+            description: "Gema roja de gran pureza y belleza",
+            category: "treasure",
+            rarity: "rare",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 500, platinum: 0 },
+            weight: 0,
+            properties: ["Gema preciosa", "500 gp de valor"],
+            inStock: 3,
+            tags: ["rubí", "gema", "preciosa"]
+          },
+          {
+            id: generateId(),
+            name: "Diamante",
+            description: "La gema más dura y brillante conocida",
+            category: "treasure",
+            rarity: "very_rare",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 1000, platinum: 0 },
+            weight: 0,
+            properties: ["Gema preciosa", "1000 gp de valor"],
+            inStock: 1,
+            tags: ["diamante", "gema", "brillante"]
+          },
+          {
+            id: generateId(),
+            name: "Corona de Plata",
+            description: "Corona ceremonial de plata con incrustaciones",
+            category: "treasure",
+            rarity: "rare",
+            price: { copper: 0, silver: 0, electrum: 0, gold: 250, platinum: 0 },
+            weight: 2,
+            properties: ["Objeto ceremonial", "Plata pura"],
+            inStock: 2,
+            tags: ["corona", "plata", "ceremonial"]
+          }
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       }
     ];
 
-    // Guardar las tiendas de ejemplo
     for (const shop of exampleShops) {
       await saveShop(shop);
     }
 
-    return exampleShops;
+    setShops(exampleShops);
+    setSelectedShop(exampleShops[0]);
   };
 
-  const addToCart = (item: ShopItem) => {
-    const existingItem = cart.find(cartItem => cartItem.item.id === item.id);
-    
-    if (existingItem) {
-      if (existingItem.quantity < item.inStock) {
-        setCart(cart.map(cartItem =>
+  const addToCart = (item: ShopItem, quantity: number = 1) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(cartItem => cartItem.item.id === item.id);
+      
+      if (existingItem) {
+        const newQuantity = Math.min(existingItem.quantity + quantity, item.inStock);
+        return prevCart.map(cartItem =>
           cartItem.item.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            ? { ...cartItem, quantity: newQuantity }
             : cartItem
-        ));
+        );
+      } else {
+        return [...prevCart, { item, quantity: Math.min(quantity, item.inStock) }];
       }
-    } else {
-      setCart([...cart, { item, quantity: 1 }]);
-    }
+    });
   };
 
   const removeFromCart = (itemId: string) => {
-    setCart(cart.filter(cartItem => cartItem.item.id !== itemId));
+    setCart(prevCart => prevCart.filter(cartItem => cartItem.item.id !== itemId));
   };
 
   const updateCartQuantity = (itemId: string, quantity: number) => {
@@ -713,17 +633,18 @@ function ShopPage() {
       return;
     }
 
-    const item = cart.find(cartItem => cartItem.item.id === itemId);
-    if (item && quantity <= item.item.inStock) {
-      setCart(cart.map(cartItem =>
-        cartItem.item.id === itemId
-          ? { ...cartItem, quantity }
-          : cartItem
-      ));
-    }
+    setCart(prevCart =>
+      prevCart.map(cartItem => {
+        if (cartItem.item.id === itemId) {
+          const maxQuantity = cartItem.item.inStock;
+          return { ...cartItem, quantity: Math.min(quantity, maxQuantity) };
+        }
+        return cartItem;
+      })
+    );
   };
 
-  const calculateTotal = (): Currency => {
+  const calculateCartTotal = (): Currency => {
     return cart.reduce((total, cartItem) => {
       const itemTotal = multiplyPrice(cartItem.item.price, cartItem.quantity);
       return addCurrency(total, itemTotal);
@@ -750,12 +671,6 @@ function ShopPage() {
     };
   };
 
-  const canAfford = (cost: Currency, playerCurrency: Currency): boolean => {
-    const costInCopper = convertToCopper(cost);
-    const playerCopperTotal = convertToCopper(playerCurrency);
-    return playerCopperTotal >= costInCopper;
-  };
-
   const convertToCopper = (currency: Currency): number => {
     return (
       currency.copper +
@@ -766,57 +681,74 @@ function ShopPage() {
     );
   };
 
-  const deductCurrency = (playerCurrency: Currency, cost: Currency): Currency => {
-    let remainingCost = convertToCopper(cost);
-    let newCurrency = { ...playerCurrency };
-
-    // Deduct from highest denomination first
-    const denominations = ['platinum', 'gold', 'electrum', 'silver', 'copper'] as const;
+  const convertFromCopper = (copperAmount: number): Currency => {
+    let remaining = copperAmount;
     
-    for (const denom of denominations) {
-      const denomValue = CURRENCY_CONVERSION[denom];
-      const available = newCurrency[denom];
-      const canDeduct = Math.min(available, Math.floor(remainingCost / denomValue));
-      
-      newCurrency[denom] -= canDeduct;
-      remainingCost -= canDeduct * denomValue;
-    }
+    const platinum = Math.floor(remaining / CURRENCY_CONVERSION.platinum);
+    remaining %= CURRENCY_CONVERSION.platinum;
+    
+    const gold = Math.floor(remaining / CURRENCY_CONVERSION.gold);
+    remaining %= CURRENCY_CONVERSION.gold;
+    
+    const electrum = Math.floor(remaining / CURRENCY_CONVERSION.electrum);
+    remaining %= CURRENCY_CONVERSION.electrum;
+    
+    const silver = Math.floor(remaining / CURRENCY_CONVERSION.silver);
+    remaining %= CURRENCY_CONVERSION.silver;
+    
+    const copper = remaining;
+    
+    return { copper, silver, electrum, gold, platinum };
+  };
 
-    return newCurrency;
+  const canAfford = (cost: Currency, characterCurrency: Currency): boolean => {
+    const costInCopper = convertToCopper(cost);
+    const availableInCopper = convertToCopper(characterCurrency);
+    return availableInCopper >= costInCopper;
+  };
+
+  const deductCurrency = (characterCurrency: Currency, cost: Currency): Currency => {
+    const availableInCopper = convertToCopper(characterCurrency);
+    const costInCopper = convertToCopper(cost);
+    const remainingInCopper = availableInCopper - costInCopper;
+    return convertFromCopper(remainingInCopper);
   };
 
   const handlePurchase = async () => {
-    if (!character || cart.length === 0) return;
+    if (!selectedCharacter || cart.length === 0) return;
 
-    const total = calculateTotal();
+    const totalCost = calculateCartTotal();
     
-    if (!canAfford(total, character.currency)) {
+    if (!canAfford(totalCost, selectedCharacter.currency)) {
       alert('No tienes suficiente dinero para esta compra');
       return;
     }
 
     try {
-      // Deduct currency from character
-      const newCurrency = deductCurrency(character.currency, total);
+      // Update character currency and equipment
+      const newCurrency = deductCurrency(selectedCharacter.currency, totalCost);
+      const newEquipment = [...selectedCharacter.equipment];
       
-      // Add items to character's equipment
-      const newEquipment = [...character.equipment];
       cart.forEach(cartItem => {
         for (let i = 0; i < cartItem.quantity; i++) {
           newEquipment.push(cartItem.item.name);
         }
       });
 
-      // Update character
       const updatedCharacter = {
-        ...character,
+        ...selectedCharacter,
         currency: newCurrency,
         equipment: newEquipment,
         updatedAt: Date.now()
       };
 
       await saveCharacter(updatedCharacter);
-      setCharacter(updatedCharacter);
+      setSelectedCharacter(updatedCharacter);
+
+      // Update characters list
+      setCharacters(prev => 
+        prev.map(char => char.id === updatedCharacter.id ? updatedCharacter : char)
+      );
 
       // Update shop inventory
       if (selectedShop) {
@@ -828,21 +760,24 @@ function ShopPage() {
           return item;
         });
 
-        const updatedShop = { ...selectedShop, items: updatedItems, updatedAt: Date.now() };
+        const updatedShop = {
+          ...selectedShop,
+          items: updatedItems,
+          updatedAt: Date.now()
+        };
+
         await saveShop(updatedShop);
         setSelectedShop(updatedShop);
-        
-        // Update shops list
-        setShops(shops.map(shop => shop.id === updatedShop.id ? updatedShop : shop));
+        setShops(prev => prev.map(shop => shop.id === updatedShop.id ? updatedShop : shop));
       }
 
       // Save transaction
       const transaction: Transaction = {
         id: generateId(),
-        characterId: character.id,
-        shopId: selectedShop?.id || '',
+        characterId: selectedCharacter.id,
+        shopId: selectedShop!.id,
         items: cart,
-        totalCost: total,
+        totalCost,
         timestamp: Date.now(),
         type: 'purchase'
       };
@@ -861,31 +796,33 @@ function ShopPage() {
     }
   };
 
-  const formatPrice = (price: Currency): string => {
+  const formatCurrency = (currency: Currency): string => {
     const parts = [];
-    if (price.platinum > 0) parts.push(`${price.platinum} ${CURRENCY_SYMBOLS.platinum}`);
-    if (price.gold > 0) parts.push(`${price.gold} ${CURRENCY_SYMBOLS.gold}`);
-    if (price.electrum > 0) parts.push(`${price.electrum} ${CURRENCY_SYMBOLS.electrum}`);
-    if (price.silver > 0) parts.push(`${price.silver} ${CURRENCY_SYMBOLS.silver}`);
-    if (price.copper > 0) parts.push(`${price.copper} ${CURRENCY_SYMBOLS.copper}`);
+    if (currency.platinum > 0) parts.push(`${currency.platinum} ${CURRENCY_SYMBOLS.platinum}`);
+    if (currency.gold > 0) parts.push(`${currency.gold} ${CURRENCY_SYMBOLS.gold}`);
+    if (currency.electrum > 0) parts.push(`${currency.electrum} ${CURRENCY_SYMBOLS.electrum}`);
+    if (currency.silver > 0) parts.push(`${currency.silver} ${CURRENCY_SYMBOLS.silver}`);
+    if (currency.copper > 0) parts.push(`${currency.copper} ${CURRENCY_SYMBOLS.copper}`);
     
     return parts.length > 0 ? parts.join(', ') : '0 cp';
   };
 
-  const getItemIcon = (category: string) => {
+  const getShopIcon = (shopType: string) => {
     const icons: Record<string, any> = {
-      weapon: Sword,
-      armor: Shield,
-      shield: Shield,
-      magic_item: Zap,
-      consumable: Potion,
-      tool: Hammer,
-      adventuring_gear: Package,
-      ammunition: Target,
-      trade_good: Gem,
-      treasure: Crown
+      weapon_shop: Sword,
+      armor_shop: Shield,
+      magic_shop: Zap,
+      general_store: Package,
+      blacksmith: Hammer,
+      jeweler: Gem,
+      market: Horse,
+      alchemist: Scroll,
+      tavern: Package,
+      temple: Star,
+      library: Scroll,
+      fletcher: Target
     };
-    return icons[category] || Package;
+    return icons[shopType] || Package;
   };
 
   const filteredItems = selectedShop?.items.filter(item => {
@@ -896,7 +833,7 @@ function ShopPage() {
     const matchesCategory = !categoryFilter || item.category === categoryFilter;
     const matchesRarity = !rarityFilter || item.rarity === rarityFilter;
     
-    return matchesSearch && matchesCategory && matchesRarity && item.inStock > 0;
+    return matchesSearch && matchesCategory && matchesRarity;
   }) || [];
 
   const getUniqueCategories = () => {
@@ -917,7 +854,7 @@ function ShopPage() {
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-amber-200">
           <div className="text-center">
             <div className="animate-spin w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-amber-700">Cargando tienda...</p>
+            <p className="text-amber-700">Cargando tiendas...</p>
           </div>
         </div>
       </div>
@@ -928,32 +865,16 @@ function ShopPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-amber-200">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center space-x-2 text-amber-700 hover:text-amber-900 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Volver</span>
-            </button>
             <ShoppingCart className="w-8 h-8 text-green-600" />
             <div>
-              <h1 className="text-3xl font-bold text-amber-900">Tienda de Aventureros</h1>
-              <p className="text-amber-700">Equípate para tus próximas aventuras</p>
+              <h1 className="text-3xl font-bold text-amber-900">Tiendas de Aventureros</h1>
+              <p className="text-amber-700">Equipa a tus héroes para sus próximas aventuras</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            {character && (
-              <div className="bg-amber-100 rounded-lg p-3 border border-amber-300">
-                <div className="text-sm font-medium text-amber-900">{character.name}</div>
-                <div className="text-xs text-amber-700">
-                  {formatPrice(character.currency)}
-                </div>
-              </div>
-            )}
-            
             <button
               onClick={() => setShowCart(true)}
               className="relative flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
@@ -961,7 +882,7 @@ function ShopPage() {
               <ShoppingCart size={18} />
               <span>Carrito</span>
               {cart.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               )}
@@ -969,218 +890,236 @@ function ShopPage() {
           </div>
         </div>
 
-        {/* Shop Selection */}
-        <div className="flex items-center space-x-4 mb-4">
+        {/* Character Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-amber-900 mb-2">
+            Seleccionar Personaje para Comprar
+          </label>
           <select
-            value={selectedShop?.id || ''}
+            value={selectedCharacter?.id || ''}
             onChange={(e) => {
-              const shop = shops.find(s => s.id === e.target.value);
-              setSelectedShop(shop || null);
+              const character = characters.find(c => c.id === e.target.value);
+              setSelectedCharacter(character || null);
             }}
-            className="flex-1 p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           >
-            <option value="">Seleccionar tienda...</option>
-            {shops.map(shop => (
-              <option key={shop.id} value={shop.id}>
-                {shop.name} - {shop.location}
+            <option value="">Seleccionar personaje...</option>
+            {characters.map(character => (
+              <option key={character.id} value={character.id}>
+                {character.name} - {character.class} Nivel {character.level} ({formatCurrency(character.currency)})
               </option>
             ))}
           </select>
         </div>
 
-        {selectedShop && (
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold text-amber-900">{selectedShop.name}</h2>
-              <div className="flex items-center space-x-2">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm text-amber-700">{selectedShop.reputation}% reputación</span>
-              </div>
-            </div>
-            <p className="text-amber-700 mb-2">{selectedShop.description}</p>
-            <div className="flex items-center justify-between text-sm text-amber-600">
-              <span>📍 {selectedShop.location}</span>
-              <span>👤 {selectedShop.keeper}</span>
-              {selectedShop.discountPercentage > 0 && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  {selectedShop.discountPercentage}% descuento
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Search and Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-400" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar objetos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              <option value="">Todas las categorías</option>
-              {getUniqueCategories().map(category => (
-                <option key={category} value={category}>
-                  {CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES] || category}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <select
-              value={rarityFilter}
-              onChange={(e) => setRarityFilter(e.target.value)}
-              className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              <option value="">Todas las rarezas</option>
-              {getUniqueRarities().map(rarity => (
-                <option key={rarity} value={rarity}>
-                  {RARITY_NAMES[rarity as keyof typeof RARITY_NAMES] || rarity}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Shop Selection */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {shops.map(shop => {
+            const ShopIcon = getShopIcon(shop.type);
+            return (
+              <button
+                key={shop.id}
+                onClick={() => setSelectedShop(shop)}
+                className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  selectedShop?.id === shop.id
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-amber-200 bg-white hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <ShopIcon className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-amber-900">{shop.name}</h3>
+                    <p className="text-sm text-amber-600">{shop.keeper}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-amber-700 mb-2">{shop.description}</p>
+                <div className="flex items-center justify-between text-xs text-amber-600">
+                  <span>📍 {shop.location}</span>
+                  <span>⭐ {shop.reputation}%</span>
+                </div>
+                {shop.discountPercentage > 0 && (
+                  <div className="mt-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full inline-block">
+                    {shop.discountPercentage}% descuento
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Items Grid */}
       {selectedShop && (
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-amber-200">
-          <h2 className="text-2xl font-bold text-amber-900 mb-6">
-            Objetos Disponibles ({filteredItems.length})
-          </h2>
-          
-          {filteredItems.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
-              <p className="text-amber-600 text-lg">No hay objetos disponibles</p>
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setCategoryFilter('');
-                  setRarityFilter('');
-                }}
-                className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-              >
-                Limpiar Filtros
-              </button>
+        <>
+          {/* Shop Details and Filters */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-amber-200">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-amber-900">{selectedShop.name}</h2>
+                <p className="text-amber-700">{selectedShop.description}</p>
+                <div className="flex items-center space-x-4 mt-2 text-sm text-amber-600">
+                  <span>📍 {selectedShop.location}</span>
+                  <span>👤 {selectedShop.keeper}</span>
+                  <span>⭐ {selectedShop.reputation}% reputación</span>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.map(item => {
-                const ItemIcon = getItemIcon(item.category);
-                const isInCart = cart.some(cartItem => cartItem.item.id === item.id);
-                const cartQuantity = cart.find(cartItem => cartItem.item.id === item.id)?.quantity || 0;
-                
-                return (
-                  <div
-                    key={item.id}
-                    className={`bg-white rounded-xl p-4 border-2 shadow-sm hover:shadow-md transition-all ${
-                      RARITY_COLORS[item.rarity as keyof typeof RARITY_COLORS]
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <ItemIcon className="w-5 h-5 text-amber-600" />
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          item.rarity === 'common' ? 'bg-gray-100 text-gray-800' :
-                          item.rarity === 'uncommon' ? 'bg-green-100 text-green-800' :
-                          item.rarity === 'rare' ? 'bg-blue-100 text-blue-800' :
-                          item.rarity === 'very_rare' ? 'bg-purple-100 text-purple-800' :
-                          item.rarity === 'legendary' ? 'bg-orange-100 text-orange-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {RARITY_NAMES[item.rarity as keyof typeof RARITY_NAMES]}
-                        </span>
-                      </div>
-                      <span className="text-xs text-amber-600">Stock: {item.inStock}</span>
-                    </div>
 
-                    <h3 className="font-bold text-amber-900 mb-2">{item.name}</h3>
-                    <p className="text-sm text-amber-700 mb-3 line-clamp-2">{item.description}</p>
+            {/* Search and Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Buscar objetos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="">Todas las categorías</option>
+                  {getUniqueCategories().map(category => (
+                    <option key={category} value={category}>
+                      {CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES] || category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <select
+                  value={rarityFilter}
+                  onChange={(e) => setRarityFilter(e.target.value)}
+                  className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  <option value="">Todas las rarezas</option>
+                  {getUniqueRarities().map(rarity => (
+                    <option key={rarity} value={rarity}>
+                      {RARITY_NAMES[rarity as keyof typeof RARITY_NAMES] || rarity}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-                    {item.damage && (
-                      <div className="text-xs text-red-600 mb-2">
-                        <strong>Daño:</strong> {item.damage}
-                      </div>
-                    )}
+            <div className="mt-4 text-sm text-amber-600">
+              Mostrando {filteredItems.length} de {selectedShop.items.length} objetos
+            </div>
+          </div>
 
-                    {item.armorClass && (
-                      <div className="text-xs text-blue-600 mb-2">
-                        <strong>CA:</strong> {item.armorClass}
-                      </div>
-                    )}
-
-                    {item.properties.length > 0 && (
-                      <div className="text-xs text-amber-600 mb-3">
-                        <strong>Propiedades:</strong> {item.properties.join(', ')}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm font-bold text-green-700">
-                        {formatPrice(item.price)}
-                      </div>
-                      <div className="text-xs text-amber-600">
-                        {item.weight > 0 && `${item.weight} lb`}
-                      </div>
-                    </div>
-
-                    {isInCart ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => updateCartQuantity(item.id, cartQuantity - 1)}
-                            className="w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600"
-                          >
-                            -
-                          </button>
-                          <span className="font-bold text-amber-900">{cartQuantity}</span>
-                          <button
-                            onClick={() => updateCartQuantity(item.id, cartQuantity + 1)}
-                            disabled={cartQuantity >= item.inStock}
-                            className="w-6 h-6 bg-green-500 text-white rounded-full text-xs hover:bg-green-600 disabled:opacity-50"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => addToCart(item)}
-                        disabled={item.inStock === 0}
-                        className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Plus size={16} />
-                        <span>Agregar</span>
-                      </button>
-                    )}
+          {/* Items Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.map(item => (
+              <div
+                key={item.id}
+                className={`bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 transition-all hover:shadow-2xl ${RARITY_COLORS[item.rarity]}`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-900">{item.name}</h3>
+                    <p className="text-sm text-amber-600">
+                      {CATEGORY_NAMES[item.category as keyof typeof CATEGORY_NAMES] || item.category}
+                    </p>
                   </div>
-                );
-              })}
+                  <span className={`text-xs px-2 py-1 rounded-full ${RARITY_COLORS[item.rarity]} border`}>
+                    {RARITY_NAMES[item.rarity as keyof typeof RARITY_NAMES] || item.rarity}
+                  </span>
+                </div>
+
+                <p className="text-sm text-amber-700 mb-4">{item.description}</p>
+
+                {/* Item Properties */}
+                <div className="space-y-2 mb-4">
+                  {item.damage && (
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900">Daño:</span> {item.damage}
+                    </div>
+                  )}
+                  {item.armorClass && (
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900">CA:</span> {item.armorClass}
+                    </div>
+                  )}
+                  {item.weight > 0 && (
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900">Peso:</span> {item.weight} lb
+                    </div>
+                  )}
+                  {item.requirements && (
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900">Requisitos:</span> {item.requirements}
+                    </div>
+                  )}
+                  {item.properties.length > 0 && (
+                    <div className="text-sm">
+                      <span className="font-medium text-amber-900">Propiedades:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.properties.map((prop, index) => (
+                          <span key={index} className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                            {prop}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price and Stock */}
+                <div className="border-t border-amber-200 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-lg font-bold text-green-600">
+                      {formatCurrency(item.price)}
+                    </div>
+                    <div className="text-sm text-amber-600">
+                      Stock: {item.inStock}
+                    </div>
+                  </div>
+
+                  {/* Add to Cart */}
+                  <button
+                    onClick={() => addToCart(item)}
+                    disabled={!selectedCharacter || item.inStock === 0 || !canAfford(item.price, selectedCharacter?.currency || { copper: 0, silver: 0, electrum: 0, gold: 0, platinum: 0 })}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus size={16} />
+                    <span>Agregar al Carrito</span>
+                  </button>
+
+                  {!selectedCharacter && (
+                    <p className="text-xs text-red-600 mt-2 text-center">
+                      Selecciona un personaje para comprar
+                    </p>
+                  )}
+                  
+                  {selectedCharacter && !canAfford(item.price, selectedCharacter.currency) && (
+                    <p className="text-xs text-red-600 mt-2 text-center">
+                      Fondos insuficientes
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredItems.length === 0 && (
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-amber-200 text-center">
+              <Package className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-amber-900 mb-2">No se encontraron objetos</h2>
+              <p className="text-amber-700">Intenta ajustar los filtros de búsqueda</p>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Cart Modal */}
@@ -1209,36 +1148,36 @@ function ShopPage() {
                     <div key={cartItem.item.id} className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
                       <div className="flex-1">
                         <h3 className="font-bold text-amber-900">{cartItem.item.name}</h3>
-                        <p className="text-sm text-amber-700">{formatPrice(cartItem.item.price)} c/u</p>
+                        <p className="text-sm text-amber-600">{formatCurrency(cartItem.item.price)} cada uno</p>
                       </div>
                       
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => updateCartQuantity(cartItem.item.id, cartItem.quantity - 1)}
-                            className="w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600"
+                            className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
                           >
-                            -
+                            <Minus size={14} />
                           </button>
-                          <span className="font-bold text-amber-900 min-w-[2rem] text-center">
-                            {cartItem.quantity}
-                          </span>
+                          <span className="w-8 text-center font-bold">{cartItem.quantity}</span>
                           <button
                             onClick={() => updateCartQuantity(cartItem.item.id, cartItem.quantity + 1)}
                             disabled={cartItem.quantity >= cartItem.item.inStock}
-                            className="w-6 h-6 bg-green-500 text-white rounded-full text-xs hover:bg-green-600 disabled:opacity-50"
+                            className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 disabled:opacity-50"
                           >
-                            +
+                            <Plus size={14} />
                           </button>
                         </div>
                         
-                        <div className="text-sm font-bold text-green-700 min-w-[4rem] text-right">
-                          {formatPrice(multiplyPrice(cartItem.item.price, cartItem.quantity))}
+                        <div className="text-right min-w-[80px]">
+                          <div className="font-bold text-amber-900">
+                            {formatCurrency(multiplyPrice(cartItem.item.price, cartItem.quantity))}
+                          </div>
                         </div>
                         
                         <button
                           onClick={() => removeFromCart(cartItem.item.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
                         >
                           <X size={16} />
                         </button>
@@ -1249,22 +1188,18 @@ function ShopPage() {
 
                 <div className="border-t border-amber-200 pt-4">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-bold text-amber-900">Total:</span>
-                    <span className="text-lg font-bold text-green-700">
-                      {formatPrice(calculateTotal())}
+                    <span className="text-xl font-bold text-amber-900">Total:</span>
+                    <span className="text-xl font-bold text-green-600">
+                      {formatCurrency(calculateCartTotal())}
                     </span>
                   </div>
 
-                  {character && (
-                    <div className="mb-4">
-                      <div className="text-sm text-amber-700 mb-2">Tu dinero:</div>
-                      <div className="text-sm font-medium text-amber-900">
-                        {formatPrice(character.currency)}
-                      </div>
-                      {!canAfford(calculateTotal(), character.currency) && (
-                        <div className="text-sm text-red-600 mt-1">
-                          No tienes suficiente dinero
-                        </div>
+                  {selectedCharacter && (
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h3 className="font-bold text-blue-900 mb-2">Dinero de {selectedCharacter.name}:</h3>
+                      <p className="text-blue-800">{formatCurrency(selectedCharacter.currency)}</p>
+                      {!canAfford(calculateCartTotal(), selectedCharacter.currency) && (
+                        <p className="text-red-600 text-sm mt-2">⚠️ Fondos insuficientes</p>
                       )}
                     </div>
                   )}
@@ -1274,14 +1209,14 @@ function ShopPage() {
                       onClick={() => setShowCart(false)}
                       className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                     >
-                      Seguir Comprando
+                      Continuar Comprando
                     </button>
                     <button
                       onClick={() => {
                         setShowCart(false);
                         setShowCheckout(true);
                       }}
-                      disabled={!character || cart.length === 0 || !canAfford(calculateTotal(), character.currency)}
+                      disabled={!selectedCharacter || !canAfford(calculateCartTotal(), selectedCharacter?.currency || { copper: 0, silver: 0, electrum: 0, gold: 0, platinum: 0 })}
                       className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Proceder al Pago
@@ -1308,49 +1243,60 @@ function ShopPage() {
               </button>
             </div>
 
-            <div className="space-y-4 mb-6">
-              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                <h3 className="font-bold text-amber-900 mb-2">Resumen de Compra</h3>
-                <div className="space-y-2">
-                  {cart.map(cartItem => (
-                    <div key={cartItem.item.id} className="flex justify-between text-sm">
-                      <span>{cartItem.item.name} x{cartItem.quantity}</span>
-                      <span>{formatPrice(multiplyPrice(cartItem.item.price, cartItem.quantity))}</span>
-                    </div>
-                  ))}
+            {selectedCharacter && (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="font-bold text-blue-900 mb-2">Comprador:</h3>
+                  <p className="text-blue-800">{selectedCharacter.name}</p>
+                  <p className="text-sm text-blue-600">{selectedCharacter.class} Nivel {selectedCharacter.level}</p>
                 </div>
-                <div className="border-t border-amber-300 mt-2 pt-2 flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>{formatPrice(calculateTotal())}</span>
-                </div>
-              </div>
 
-              {character && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="font-bold text-blue-900 mb-2">Tu Dinero</h3>
-                  <div className="text-sm">
-                    <div>Antes: {formatPrice(character.currency)}</div>
-                    <div>Después: {formatPrice(deductCurrency(character.currency, calculateTotal()))}</div>
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="font-bold text-green-900 mb-2">Tienda:</h3>
+                  <p className="text-green-800">{selectedShop?.name}</p>
+                  <p className="text-sm text-green-600">{selectedShop?.keeper}</p>
+                </div>
+
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h3 className="font-bold text-amber-900 mb-2">Resumen de Compra:</h3>
+                  <div className="space-y-2">
+                    {cart.map(cartItem => (
+                      <div key={cartItem.item.id} className="flex justify-between text-sm">
+                        <span>{cartItem.item.name} x{cartItem.quantity}</span>
+                        <span>{formatCurrency(multiplyPrice(cartItem.item.price, cartItem.quantity))}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-amber-300 mt-2 pt-2 flex justify-between font-bold">
+                    <span>Total:</span>
+                    <span>{formatCurrency(calculateCartTotal())}</span>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowCheckout(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handlePurchase}
-                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Check size={18} />
-                <span>Confirmar Compra</span>
-              </button>
-            </div>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="font-bold text-gray-900 mb-2">Dinero Actual:</h3>
+                  <p className="text-gray-800 mb-2">{formatCurrency(selectedCharacter.currency)}</p>
+                  <h3 className="font-bold text-gray-900 mb-2">Dinero Después de la Compra:</h3>
+                  <p className="text-gray-800">{formatCurrency(deductCurrency(selectedCharacter.currency, calculateCartTotal()))}</p>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowCheckout(false)}
+                    className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handlePurchase}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Check size={18} />
+                    <span>Confirmar Compra</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
