@@ -439,16 +439,17 @@ function ShopPage() {
             </div>
             <div className="relative">
               <select
-                value={selectedShop?.id || ''}
-                onChange={(e) => handleShopChange(e.target.value)}
-                className="w-full p-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white appearance-none pr-10"
-              >
-                <option value="">Elige una tienda...</option>
-                {shops.map(shop => (
-                  <option key={shop.id} value={shop.id}>
-                    {shop.name} - {SHOP_TYPE_NAMES[shop.type]} ({shop.items?.length || 0} objetos)
-                  </option>
-                ))}
+                  value={selectedShop?.id || ''}
+  onChange={(e) => handleShopChange(e.target.value)}
+  className="w-full p-3 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white appearance-none pr-10"
+>
+  <option value="">Elige una tienda...</option>
+  {shops.map(shop => (
+    <option key={shop.id} value={shop.id}>
+      {shop.name} - {SHOP_TYPE_NAMES[shop.type] || "Tienda"} 
+      ({shop.items?.length || 0} objetos)
+    </option>
+  ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 pointer-events-none" size={20} />
             </div>
