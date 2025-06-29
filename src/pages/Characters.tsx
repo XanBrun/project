@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Users, Plus, Search, Filter, Edit, Trash2, Eye, 
-  Heart, Shield, Zap, Coins, Star, Crown, Sword,
-  UserPlus, ArrowRight, Calendar, Level
-} from 'lucide-react';
+import { Users, Plus, Search, Filter, Edit, Trash2, Eye, Heart, Shield, Zap, Coins, Star, Crown, Sword, UserPlus, ArrowRight, Calendar, Gavel as Level } from 'lucide-react';
 import { loadCharacters, deleteCharacter } from '../services/db';
 import { Character, CURRENCY_SYMBOLS } from '../types';
 
