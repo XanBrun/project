@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { 
   Dice6, Users, Sword, Map, Settings, Home, UserPlus, Bluetooth, BluetoothConnected, 
   ShoppingCart, Menu, X, Smartphone, Wifi 
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { useBluetoothStore } from '../stores/bluetoothStore';
+import { useBluetoothNativeStore } from '../stores/bluetoothNativeStore';
+import BluetoothNativeStatus from './bluetooth/BluetoothNativeStatus';
 
 const navigation = [
   { name: 'Inicio', href: '/', icon: Home },
@@ -21,8 +24,32 @@ const navigation = [
 
 function Layout() {
   const location = useLocation();
-  const { isConnected, isConnecting, connectToDevice, disconnectDevice, error, deviceInfo } = useBluetoothStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Use native Bluetooth store for mobile, web store for browser
+  const webBluetooth = useBluetoothStore();
+  const nativeBluetooth = useBluetoothNativeStore();
+
+  // Determine which Bluetooth service to use
+  const bluetooth = isMobile ? nativeBluetooth : webBluetooth;
+
+  useEffect(() => {
+    const checkPlatform = () => {
+      const isNative = Capacitor.isNativePlatform();
+      setIsMobile(isNative);
+      console.log('Platform detected:', isNative ? 'Native Mobile' : 'Web Browser');
+    };
+
+    checkPlatform();
+
+    // Initialize appropriate Bluetooth service
+    if (Capacitor.isNativePlatform()) {
+      nativeBluetooth.initializeBluetooth();
+    } else {
+      webBluetooth.initializeBluetoothState();
+    }
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -34,13 +61,34 @@ function Layout() {
 
   const formatMacAddress = (mac: string) => {
     if (!mac || mac === 'No disponible') return mac;
-    // Ensure MAC address is properly formatted
     return mac.toUpperCase();
   };
 
   const truncateDeviceName = (name: string, maxLength: number = 15) => {
     if (!name || name.length <= maxLength) return name;
     return name.substring(0, maxLength) + '...';
+  };
+
+  // Get connection status based on platform
+  const isConnected = isMobile ? nativeBluetooth.isConnected : webBluetooth.isConnected;
+  const isConnecting = isMobile ? nativeBluetooth.isConnecting : webBluetooth.isConnecting;
+  const deviceInfo = isMobile ? nativeBluetooth.deviceInfo : webBluetooth.deviceInfo;
+  const error = isMobile ? nativeBluetooth.error : webBluetooth.error;
+
+  const handleConnect = () => {
+    if (isMobile) {
+      nativeBluetooth.scanForDevices();
+    } else {
+      webBluetooth.connectToDevice();
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (isMobile) {
+      nativeBluetooth.disconnectDevice();
+    } else {
+      webBluetooth.disconnectDevice();
+    }
   };
 
   return (
@@ -52,11 +100,16 @@ function Layout() {
             <Dice6 className="h-8 w-8 text-amber-600" />
             <div>
               <h1 className="text-xl font-bold text-amber-900">D&D Local</h1>
-              <p className="text-xs text-amber-600">Aventuras Épicas</p>
+              <p className="text-xs text-amber-600">
+                {isMobile ? 'Nativo Android' : 'Web App'}
+              </p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
+            {/* Platform indicator */}
+            {isMobile && <Smartphone className="h-5 w-5 text-blue-500" />}
+            
             {/* Bluetooth Status Mobile */}
             <div className="flex items-center space-x-1">
               {isConnected ? (
@@ -94,7 +147,9 @@ function Layout() {
               <Dice6 className="h-10 w-10 text-amber-300" />
               <div>
                 <h1 className="text-2xl font-bold text-amber-100">D&D Local</h1>
-                <p className="text-xs text-amber-300">Aventuras Épicas</p>
+                <p className="text-xs text-amber-300">
+                  {isMobile ? 'Nativo Android' : 'Web App'}
+                </p>
               </div>
             </div>
             <button
@@ -133,52 +188,60 @@ function Layout() {
 
         {/* Mobile Bluetooth Status */}
         <div className="p-4 border-t border-amber-700 bg-amber-900">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              {isConnected ? (
-                <BluetoothConnected className="h-5 w-5 text-green-400" />
-              ) : (
-                <Bluetooth className="h-5 w-5 text-amber-400" />
-              )}
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
-                </div>
-                {isConnected && deviceInfo && (
-                  <div className="text-xs text-amber-300">
-                    <div className="flex items-center space-x-1">
-                      <Smartphone className="w-3 h-3" />
-                      <span>{truncateDeviceName(deviceInfo.name, 12)}</span>
-                    </div>
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Wifi className="w-3 h-3" />
-                      <span>{formatMacAddress(deviceInfo.mac)}</span>
-                    </div>
-                  </div>
+          {isMobile ? (
+            <BluetoothNativeStatus showDetails={true} className="bg-amber-800/50 border-amber-600" />
+          ) : (
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                {isConnected ? (
+                  <BluetoothConnected className="h-5 w-5 text-green-400" />
+                ) : (
+                  <Bluetooth className="h-5 w-5 text-amber-400" />
                 )}
+                <div className="flex-1">
+                  <div className="text-sm font-medium">
+                    {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
+                  </div>
+                  {isConnected && deviceInfo && (
+                    <div className="text-xs text-amber-300">
+                      <div className="flex items-center space-x-1">
+                        <Smartphone className="w-3 h-3" />
+                        <span>{truncateDeviceName(deviceInfo.name, 12)}</span>
+                      </div>
+                      <div className="flex items-center space-x-1 mt-1">
+                        <Wifi className="w-3 h-3" />
+                        <span>{formatMacAddress(deviceInfo.mac)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
             </div>
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
-          </div>
+          )}
           
-          <button
-            onClick={isConnected ? disconnectDevice : connectToDevice}
-            disabled={isConnecting}
-            className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
-              isConnecting
-                ? 'bg-amber-600 cursor-not-allowed opacity-50'
-                : isConnected
-                ? 'bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg'
-                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
-            }`}
-          >
-            {isConnecting ? 'Conectando...' : isConnected ? 'Desconectar' : 'Conectar Dispositivo'}
-          </button>
-          
-          {error && (
-            <div className="mt-2 text-xs text-red-300 bg-red-900/30 p-2 rounded">
-              {error}
-            </div>
+          {!isMobile && (
+            <>
+              <button
+                onClick={isConnected ? handleDisconnect : handleConnect}
+                disabled={isConnecting}
+                className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
+                  isConnecting
+                    ? 'bg-amber-600 cursor-not-allowed opacity-50'
+                    : isConnected
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
+                }`}
+              >
+                {isConnecting ? 'Conectando...' : isConnected ? 'Desconectar' : 'Conectar Dispositivo'}
+              </button>
+              
+              {error && (
+                <div className="mt-2 text-xs text-red-300 bg-red-900/30 p-2 rounded">
+                  {error}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -191,7 +254,10 @@ function Layout() {
             <Dice6 className="h-10 w-10 text-amber-300" />
             <div>
               <h1 className="text-2xl font-bold text-amber-100">D&D Local</h1>
-              <p className="text-xs text-amber-300">Aventuras Épicas</p>
+              <p className="text-xs text-amber-300 flex items-center space-x-1">
+                <span>{isMobile ? 'Nativo Android' : 'Web App'}</span>
+                {isMobile && <Smartphone className="w-3 h-3" />}
+              </p>
             </div>
           </div>
         </div>
@@ -222,52 +288,58 @@ function Layout() {
 
         {/* Bluetooth Status */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-amber-700 bg-amber-900">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              {isConnected ? (
-                <BluetoothConnected className="h-5 w-5 text-green-400" />
-              ) : (
-                <Bluetooth className="h-5 w-5 text-amber-400" />
-              )}
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
-                </div>
-                {isConnected && deviceInfo && (
-                  <div className="text-xs text-amber-300 mt-1">
-                    <div className="flex items-center space-x-1 mb-1">
-                      <Smartphone className="w-3 h-3" />
-                      <span title={deviceInfo.name}>{truncateDeviceName(deviceInfo.name, 18)}</span>
+          {isMobile ? (
+            <BluetoothNativeStatus showDetails={true} className="bg-amber-800/50 border-amber-600" />
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  {isConnected ? (
+                    <BluetoothConnected className="h-5 w-5 text-green-400" />
+                  ) : (
+                    <Bluetooth className="h-5 w-5 text-amber-400" />
+                  )}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">
+                      {isConnecting ? 'Conectando...' : isConnected ? 'Conectado' : 'Desconectado'}
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Wifi className="w-3 h-3" />
-                      <span className="font-mono text-xs">{formatMacAddress(deviceInfo.mac)}</span>
-                    </div>
+                    {isConnected && deviceInfo && (
+                      <div className="text-xs text-amber-300 mt-1">
+                        <div className="flex items-center space-x-1 mb-1">
+                          <Smartphone className="w-3 h-3" />
+                          <span title={deviceInfo.name}>{truncateDeviceName(deviceInfo.name, 18)}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Wifi className="w-3 h-3" />
+                          <span className="font-mono text-xs">{formatMacAddress(deviceInfo.mac)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
               </div>
-            </div>
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
-          </div>
-          
-          <button
-            onClick={isConnected ? disconnectDevice : connectToDevice}
-            disabled={isConnecting}
-            className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
-              isConnecting
-                ? 'bg-amber-600 cursor-not-allowed opacity-50'
-                : isConnected
-                ? 'bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg'
-                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
-            }`}
-          >
-            {isConnecting ? 'Conectando...' : isConnected ? 'Desconectar' : 'Conectar Dispositivo'}
-          </button>
-          
-          {error && (
-            <div className="mt-2 text-xs text-red-300 bg-red-900/30 p-2 rounded">
-              {error}
-            </div>
+              
+              <button
+                onClick={isConnected ? handleDisconnect : handleConnect}
+                disabled={isConnecting}
+                className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
+                  isConnecting
+                    ? 'bg-amber-600 cursor-not-allowed opacity-50'
+                    : isConnected
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg'
+                }`}
+              >
+                {isConnecting ? 'Conectando...' : isConnected ? 'Desconectar' : 'Conectar Dispositivo'}
+              </button>
+              
+              {error && (
+                <div className="mt-2 text-xs text-red-300 bg-red-900/30 p-2 rounded">
+                  {error}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -291,6 +363,7 @@ function Layout() {
                     deviceInfo ? `${truncateDeviceName(deviceInfo.name, 20)}` : 'En línea'
                   ) : 'Sin conexión'}
                 </span>
+                {isMobile && <Smartphone className="w-4 h-4 text-blue-500" />}
               </div>
             </div>
           </div>

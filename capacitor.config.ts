@@ -23,7 +23,20 @@ const config: CapacitorConfig = {
       resize: "body",
       style: "dark",
       resizeOnFullScreen: true
+    },
+    BluetoothLe: {
+      displayStrings: {
+        scanning: "Buscando dispositivos...",
+        cancel: "Cancelar",
+        availableDevices: "Dispositivos disponibles",
+        noDeviceFound: "No se encontraron dispositivos"
+      }
     }
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: true
   }
 };
 

@@ -1,10 +1,17 @@
-# 🎲 D&D Local - Compañero de Aventuras
+# 🎲 D&D Local - Aplicación Nativa Android
 
-Una aplicación web completa para gestionar aventuras de Dungeons & Dragons 5e con conectividad Bluetooth local para juego multijugador.
+Una aplicación nativa de Android para gestionar aventuras de Dungeons & Dragons 5e con conectividad Bluetooth nativa para juego multijugador local.
 
 ![D&D Local](https://images.pexels.com/photos/1040157/pexels-photo-1040157.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop)
 
 ## ✨ Características Principales
+
+### 🔵 **Bluetooth Nativo Completo**
+- **Bluetooth LE nativo** para dispositivos Android
+- **Escaneo automático** de dispositivos cercanos
+- **Conexión estable** sin limitaciones del navegador
+- **Permisos optimizados** para Android 6+ y 12+
+- **Sincronización en tiempo real** entre dispositivos
 
 ### 🎯 **Sistema de Personajes Completo**
 - **Creador de personajes** con sistema Point Buy
@@ -26,13 +33,13 @@ Una aplicación web completa para gestionar aventuras de Dungeons & Dragons 5e c
 - **Modificadores** personalizables
 - **Animaciones** visuales durante el lanzamiento
 - **Historial persistente** de lanzamientos
-- **Resultados detallados** con suma automática
+- **Sincronización Bluetooth** de resultados
 
-### ⚔️ **Rastreador de Combate**
+### ⚔️ **Combate Multijugador**
 - **Iniciativa automática** con orden de turnos
 - **Gestión de HP** en tiempo real
 - **Condiciones de estado** aplicables
-- **Encuentros persistentes** guardados automáticamente
+- **Sincronización** de acciones entre dispositivos
 - **Integración con personajes** y su equipo
 
 ### 🗺️ **Sistema de Mapas Interactivo**
@@ -49,14 +56,9 @@ Una aplicación web completa para gestionar aventuras de Dungeons & Dragons 5e c
 - **Estados de campaña** (planificación, activa, completada)
 - **Plantillas de NPCs** predefinidas
 
-### 📱 **Conectividad Bluetooth**
-- **Multijugador local** sin necesidad de internet
-- **Sincronización** de dados, personajes y eventos
-- **Detección automática** de dispositivos compatibles
-- **Manejo robusto** de conexiones y errores
-
 ## 🚀 Tecnologías Utilizadas
 
+### **Frontend**
 - **React 18** con TypeScript
 - **Vite** como bundler y servidor de desarrollo
 - **Tailwind CSS** para estilos responsivos
@@ -64,10 +66,102 @@ Una aplicación web completa para gestionar aventuras de Dungeons & Dragons 5e c
 - **Zustand** para gestión de estado global
 - **LocalForage** para almacenamiento local
 - **Lucide React** para iconografía
-- **Web Bluetooth API** para conectividad
-- **PWA** con Service Worker para uso offline
 
-## 🎮 Tiendas Incluidas
+### **Móvil Nativo**
+- **Capacitor 5** para aplicación nativa
+- **Capacitor Bluetooth LE** para conectividad nativa
+- **Android SDK** para funcionalidades específicas
+- **Gradle** para construcción de APK
+
+### **APIs y Servicios**
+- **Bluetooth LE API** nativa para Android
+- **File System API** para almacenamiento
+- **Status Bar API** para personalización
+- **Splash Screen API** para pantalla de carga
+
+## 📱 Instalación y Configuración
+
+### **Requisitos Previos**
+- **Node.js 18+** y npm
+- **Android Studio** con SDK configurado
+- **Java JDK 11+**
+- **Variables de entorno** configuradas:
+
+```bash
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+### **Instalación Rápida**
+
+```bash
+# 1. Clonar e instalar dependencias
+git clone <repository-url>
+cd dnd-local
+npm install
+
+# 2. Construir APK nativa
+./scripts/build-native-apk.sh
+
+# 3. Instalar en dispositivo
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### **Desarrollo Local**
+
+```bash
+# Servidor de desarrollo web
+npm run dev
+
+# Construcción para móvil
+npm run build:mobile
+
+# Abrir en Android Studio
+npm run android:open
+
+# Ejecutar en dispositivo
+npm run android:dev
+```
+
+## 🔵 Funcionalidades Bluetooth Nativas
+
+### **Permisos Incluidos**
+- `BLUETOOTH` - Acceso básico a Bluetooth
+- `BLUETOOTH_ADMIN` - Administración de Bluetooth
+- `BLUETOOTH_SCAN` - Escaneo de dispositivos (Android 12+)
+- `BLUETOOTH_CONNECT` - Conexión a dispositivos (Android 12+)
+- `ACCESS_COARSE_LOCATION` - Ubicación para escaneo
+- `ACCESS_FINE_LOCATION` - Ubicación precisa
+
+### **Características Nativas**
+- **Escaneo automático** de dispositivos D&D cercanos
+- **Conexión estable** sin limitaciones del navegador
+- **Notificaciones** en tiempo real
+- **Gestión de permisos** automática
+- **Reconexión automática** a dispositivos conocidos
+
+### **Mensajes Sincronizados**
+- **Lanzamientos de dados** en tiempo real
+- **Actualizaciones de personajes** automáticas
+- **Acciones de combate** sincronizadas
+- **Compras en tienda** compartidas
+- **Eventos de campaña** distribuidos
+
+## 🎮 Uso Multijugador
+
+### **Configuración de Sesión**
+1. **DM (Dungeon Master)**: Inicia la aplicación y activa Bluetooth
+2. **Jugadores**: Escanean y se conectan al dispositivo del DM
+3. **Sincronización**: Todos los eventos se comparten automáticamente
+
+### **Funciones Multijugador**
+- **Dados compartidos**: Todos ven los resultados en tiempo real
+- **Combate sincronizado**: Turnos e iniciativa compartidos
+- **Mapas colaborativos**: Marcadores visibles para todos
+- **Chat de eventos**: Notificaciones automáticas de acciones
+
+## 🛒 Tiendas Incluidas
 
 ### 🗡️ **Armería del Dragón de Hierro**
 - Armas, armaduras y escudos
@@ -108,117 +202,83 @@ El sistema implementa la economía oficial de D&D 5e:
 - **Conversión automática** entre denominaciones
 - **Validación de fondos** antes de compras
 - **Interfaz intuitiva** para gestión
-- **Integración completa** con personajes
+- **Sincronización Bluetooth** de transacciones
 
-## 🎯 Ejemplo de Juego Completo
+## 🎯 Ejemplo de Juego Multijugador
 
-1. **Crea tu Héroe**: Diseña un personaje con 100 monedas de oro iniciales
-2. **Equipa tu Aventurero**: Visita tiendas especializadas con inventarios únicos
-3. **Únete a la Campaña**: Explora "La Mina Perdida de Phandelver"
-4. **Combate Épico**: Usa tu equipo en combate con iniciativa automática
-
-## 📱 Instalación y Uso
-
-### Requisitos
-- Navegador moderno con soporte para Web Bluetooth
-- HTTPS o localhost para funcionalidad Bluetooth
-- JavaScript habilitado
-
-### Desarrollo Local
-```bash
-# Instalar dependencias
-npm install
-
-# Ejecutar servidor de desarrollo
-npm run dev
-
-# Construir para producción
-npm run build
-```
-
-### Navegadores Compatibles
-- ✅ Chrome 56+
-- ✅ Edge 79+
-- ✅ Opera 43+
-- ❌ Firefox (sin soporte Web Bluetooth)
-- ❌ Safari (sin soporte Web Bluetooth)
-
-## 🔧 Configuración
-
-### Bluetooth
-- La aplicación detecta automáticamente el soporte Bluetooth
-- Requiere contexto seguro (HTTPS o localhost)
-- Emparejamiento manual de dispositivos
-
-### Almacenamiento
-- Todos los datos se guardan localmente
-- No requiere conexión a internet
-- Función de exportación/importación de datos
+1. **DM inicia sesión**: Configura campaña y activa Bluetooth
+2. **Jugadores se conectan**: Escanean y conectan a la sesión
+3. **Creación de personajes**: Cada jugador crea su héroe
+4. **Aventura sincronizada**: Combate, dados y eventos compartidos
+5. **Tienda colaborativa**: Compras visibles para todo el grupo
 
 ## 📊 Características Técnicas
 
-### Arquitectura
-- **Componentes modulares** con separación clara de responsabilidades
-- **Tipos TypeScript** bien definidos para toda la aplicación
-- **Servicios reutilizables** para Bluetooth y base de datos
-- **Estado global** gestionado con Zustand
-- **Manejo robusto de errores** en todas las operaciones
+### **Arquitectura Nativa**
+- **Capacitor 5** para bridge nativo-web
+- **Bluetooth LE** para comunicación eficiente
+- **SQLite local** para almacenamiento offline
+- **Service Workers** para cache inteligente
 
-### Rendimiento
+### **Optimizaciones Móviles**
 - **Lazy loading** de componentes
-- **Optimización de bundle** con chunks separados
-- **Cache inteligente** para imágenes externas
-- **PWA** para uso offline
+- **Compresión de imágenes** automática
+- **Cache de assets** para uso offline
+- **Gestión de memoria** optimizada
 
-### Seguridad
-- **Validación de datos** en todas las operaciones
-- **Sanitización** de entradas de usuario
-- **Manejo seguro** de conexiones Bluetooth
-- **Almacenamiento local** sin exposición de datos
+### **Seguridad**
+- **Encriptación** de mensajes Bluetooth
+- **Validación** de datos en tiempo real
+- **Permisos granulares** por funcionalidad
+- **Almacenamiento seguro** local
 
-## 🎨 Diseño
+## 🔧 Scripts Disponibles
 
-### Tema Visual
-- **Paleta dorada/amber** inspirada en D&D
-- **Gradientes elegantes** y efectos de profundidad
-- **Iconografía consistente** con Lucide React
-- **Animaciones suaves** y micro-interacciones
-- **Diseño responsivo** para móviles y desktop
+```bash
+# Desarrollo
+npm run dev                 # Servidor de desarrollo
+npm run build              # Construcción web
+npm run build:mobile       # Construcción + sync móvil
 
-### Experiencia de Usuario
-- **Navegación intuitiva** con sidebar fijo
-- **Feedback visual** en todas las acciones
-- **Estados de carga** y animaciones
-- **Mensajes claros** de error y éxito
-- **Accesibilidad** mejorada
+# Android
+npm run android:dev        # Ejecutar en dispositivo
+npm run android:build      # Construir APK
+npm run android:open       # Abrir Android Studio
+npm run android:sync       # Sincronizar cambios
+
+# Capacitor
+npm run capacitor:add      # Agregar plataforma
+npm run capacitor:copy     # Copiar assets
+npm run capacitor:update   # Actualizar plugins
+```
 
 ## 📈 Estado del Proyecto
 
-**Versión**: 1.0.0  
+**Versión**: 2.0.0 (Nativa)  
 **Estado**: Completamente Funcional ✅  
+**Plataforma**: Android Nativo  
 **Última actualización**: Diciembre 2024
 
 ### Funcionalidades Implementadas
-- ✅ Sistema de personajes completo
+- ✅ Aplicación nativa Android
+- ✅ Bluetooth LE nativo completo
+- ✅ Sistema de personajes avanzado
 - ✅ Tienda con carrito de compras
 - ✅ Sistema de monedas D&D 5e
-- ✅ Lanzador de dados avanzado
-- ✅ Rastreador de combate
-- ✅ Gestión de campañas
-- ✅ Mapas interactivos
-- ✅ Conectividad Bluetooth
-- ✅ Almacenamiento local
-- ✅ PWA con Service Worker
+- ✅ Combate multijugador sincronizado
+- ✅ Gestión de campañas completa
+- ✅ Mapas interactivos colaborativos
+- ✅ Almacenamiento offline robusto
 
 ## 🤝 Contribución
 
 Este proyecto está diseñado para ser una herramienta completa para jugadores de D&D. Las contribuciones son bienvenidas para:
 
 - Nuevos objetos y tiendas
-- Mejoras en la interfaz
+- Mejoras en Bluetooth nativo
 - Optimizaciones de rendimiento
+- Nuevas características multijugador
 - Corrección de errores
-- Nuevas características
 
 ## 📄 Licencia
 
@@ -226,4 +286,4 @@ Proyecto de código abierto para la comunidad de D&D.
 
 ---
 
-**¡Que comience la aventura!** 🐉⚔️🎲
+**¡Que comience la aventura nativa!** 🐉⚔️🎲📱
