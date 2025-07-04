@@ -1,4 +1,4 @@
-// Bluetooth service for D&D application
+// Bluetooth service for D&D application using Web Bluetooth API
 export interface BluetoothDevice {
   id: string;
   name: string;
