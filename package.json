@@ -37,7 +37,7 @@
     "@capacitor/filesystem": "^5.1.4",
     "@capacitor/device": "^5.0.6",
     "@capacitor/network": "^5.0.6",
-    "@capacitor-community/bluetooth-le": "^4.0.1"
+    "@capacitor-community/bluetooth-le": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
