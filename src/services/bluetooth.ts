@@ -105,13 +105,8 @@ class BluetoothService {
 
       return this.device;
     } catch (error) {
-      // Handle user cancellation as a warning, not an error
-      if (error.name === 'NotFoundError') {
-        console.warn('User cancelled Bluetooth device selection');
-      } else {
-        console.error('Error requesting Bluetooth device:', error);
-      }
-      throw error;
+      console.error('Error requesting Bluetooth device:', error);
+      throw error; // Re-throw the original error to preserve error details
     }
   }
 
@@ -126,21 +121,37 @@ class BluetoothService {
       
       if (!deviceToConnect.gatt) {
         // Try to get devices and find our device
-        const devices = await navigator.bluetooth.getDevices();
-        deviceToConnect = devices.find(d => d.id === this.device!.id);
-        
-        if (!deviceToConnect) {
-          throw new Error('Device not found for reconnection');
+        try {
+          const devices = await navigator.bluetooth.getDevices();
+          deviceToConnect = devices.find(d => d.id === this.device!.id);
+          
+          if (!deviceToConnect) {
+            throw new Error('Device not found for reconnection. Please select the device again.');
+          }
+          
+          this.nativeDevice = deviceToConnect as any;
+        } catch (getDevicesError) {
+          throw new Error('Unable to retrieve previously paired devices. Please select the device again.');
         }
-        
-        this.nativeDevice = deviceToConnect as any;
       }
 
-      this.server = await deviceToConnect.gatt!.connect();
+      // Check if GATT server is available
+      if (!deviceToConnect.gatt) {
+        throw new Error('Device does not support GATT server connection.');
+      }
+
+      console.log('Attempting to connect to GATT server...');
+      this.server = await deviceToConnect.gatt.connect();
+      
+      if (!this.server || !this.server.connected) {
+        throw new Error('Failed to establish GATT server connection.');
+      }
+
       this.device.connected = true;
       
       // Try to get the service and characteristic
       try {
+        console.log('Attempting to get primary service...');
         const service = await this.server.getPrimaryService(this.SERVICE_UUID);
         this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
         
@@ -151,6 +162,7 @@ class BluetoothService {
         console.log('Connected to D&D service successfully');
       } catch (serviceError) {
         console.warn('Could not connect to D&D service, using basic connection:', serviceError);
+        // This is not a fatal error - we can still use basic Bluetooth connection
       }
       
       console.log('Connected to Bluetooth device:', {
@@ -161,7 +173,20 @@ class BluetoothService {
       });
     } catch (error) {
       console.error('Error connecting to Bluetooth device:', error);
-      throw error;
+      
+      // Clean up on connection failure
+      this.server = null;
+      this.characteristic = null;
+      if (this.device) {
+        this.device.connected = false;
+      }
+      
+      // Re-throw with more specific error information
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error(`Connection failed: ${error}`);
+      }
     }
   }
 
@@ -311,20 +336,42 @@ class BluetoothService {
 export const bluetoothService = new BluetoothService();
 
 export const formatBluetoothError = (error: any): string => {
+  if (!error) {
+    return 'Error desconocido de Bluetooth.';
+  }
+
+  // Handle different error types
   if (error.name === 'NotFoundError') {
     return 'No se seleccionó ningún dispositivo Bluetooth.';
   } else if (error.name === 'SecurityError') {
-    return 'Se denegó el acceso a Bluetooth.';
+    return 'Se denegó el acceso a Bluetooth. Verifica los permisos del navegador.';
   } else if (error.name === 'NotSupportedError') {
-    return 'Bluetooth no es compatible con este dispositivo.';
+    return 'Bluetooth no es compatible con este dispositivo o navegador.';
   } else if (error.name === 'NetworkError') {
-    return 'Error al conectar con el dispositivo Bluetooth.';
+    return 'Error de red al conectar con el dispositivo Bluetooth. Verifica que el dispositivo esté encendido y cerca.';
   } else if (error.name === 'InvalidStateError') {
-    return 'El adaptador Bluetooth no está disponible.';
+    return 'El adaptador Bluetooth no está disponible. Verifica que Bluetooth esté activado.';
   } else if (error.name === 'NotAllowedError') {
-    return 'Se denegó el permiso de Bluetooth.';
+    return 'Se denegó el permiso de Bluetooth. Permite el acceso a Bluetooth en la configuración del navegador.';
+  } else if (error.name === 'AbortError') {
+    return 'La operación de Bluetooth fue cancelada.';
+  } else if (error.name === 'TimeoutError') {
+    return 'Tiempo de espera agotado al conectar con el dispositivo Bluetooth.';
+  } else if (error.message) {
+    // Handle custom error messages
+    if (error.message.includes('User cancelled')) {
+      return 'Selección de dispositivo cancelada por el usuario.';
+    } else if (error.message.includes('not found for reconnection')) {
+      return 'Dispositivo no encontrado para reconexión. Selecciona el dispositivo nuevamente.';
+    } else if (error.message.includes('GATT server')) {
+      return 'No se pudo conectar al servidor GATT del dispositivo. Verifica que el dispositivo sea compatible.';
+    } else if (error.message.includes('Connection failed')) {
+      return 'Falló la conexión con el dispositivo. Verifica que esté encendido y en rango.';
+    } else {
+      return `Error de Bluetooth: ${error.message}`;
+    }
   } else {
-    return error.message || 'Ocurrió un error desconocido de Bluetooth.';
+    return 'Ocurrió un error desconocido de Bluetooth.';
   }
 };
 

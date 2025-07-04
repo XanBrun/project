@@ -39,22 +39,29 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
     try {
       set({ isConnecting: true, error: null });
 
+      // First, request device selection
       const device = await bluetoothService.requestDevice();
-      if (device) {
-        await bluetoothService.connect();
-        const deviceInfo = bluetoothService.getDeviceInfo();
-        
-        console.log('Device connected with info:', deviceInfo);
-        
-        set({
-          device,
-          deviceInfo,
-          isConnected: bluetoothService.isConnected(),
-          isConnecting: false,
-          error: null
-        });
+      if (!device) {
+        set({ isConnecting: false });
+        return;
       }
+
+      // Then attempt to connect to the selected device
+      await bluetoothService.connect();
+      const deviceInfo = bluetoothService.getDeviceInfo();
+      
+      console.log('Device connected with info:', deviceInfo);
+      
+      set({
+        device,
+        deviceInfo,
+        isConnected: bluetoothService.isConnected(),
+        isConnecting: false,
+        error: null
+      });
     } catch (error) {
+      console.error('Bluetooth connection error:', error);
+      
       // Check if the error is due to user cancellation
       if (error instanceof Error && error.name === 'NotFoundError') {
         console.info('User cancelled Bluetooth device selection');
@@ -63,10 +70,16 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
           error: null // Don't show error for user cancellation
         });
       } else {
-        console.error('Connection error:', error);
+        // Format and display the actual error
+        const errorMessage = formatBluetoothError(error);
+        console.error('Formatted error:', errorMessage);
+        
         set({
           isConnecting: false,
-          error: formatBluetoothError(error)
+          error: errorMessage,
+          device: null,
+          deviceInfo: null,
+          isConnected: false
         });
       }
     }
@@ -82,6 +95,7 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
         error: null
       });
     } catch (error) {
+      console.error('Disconnect error:', error);
       set({ error: formatBluetoothError(error) });
     }
   },
