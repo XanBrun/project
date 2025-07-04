@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bluetooth, BluetoothConnected, Smartphone, Wifi, AlertCircle } from 'lucide-react';
+import { Bluetooth, BluetoothConnected, Smartphone, Wifi, AlertCircle, Info } from 'lucide-react';
 import { useBluetoothStore } from '../../stores/bluetoothStore';
 
 interface BluetoothStatusProps {
@@ -54,13 +54,24 @@ function BluetoothStatus({ showDetails = false, compact = false, className = '' 
             </div>
             {isConnected && deviceInfo && (
               <div className="text-xs text-amber-600 mt-1">
+                {/* Device Name */}
                 <div className="flex items-center space-x-1 mb-1">
                   <Smartphone className="w-3 h-3" />
-                  <span title={deviceInfo.name}>{truncateDeviceName(deviceInfo.name, 18)}</span>
+                  <span title={deviceInfo.fullName}>
+                    {truncateDeviceName(deviceInfo.name, 18)}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-1">
+                
+                {/* MAC Address */}
+                <div className="flex items-center space-x-1 mb-1">
                   <Wifi className="w-3 h-3" />
                   <span className="font-mono text-xs">{formatMacAddress(deviceInfo.mac)}</span>
+                </div>
+                
+                {/* Device ID */}
+                <div className="flex items-center space-x-1">
+                  <Info className="w-3 h-3" />
+                  <span className="text-xs opacity-75">ID: {deviceInfo.id.substring(0, 8)}...</span>
                 </div>
               </div>
             )}
@@ -87,6 +98,14 @@ function BluetoothStatus({ showDetails = false, compact = false, className = '' 
         <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded flex items-start space-x-1">
           <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {/* Device Info Tooltip */}
+      {isConnected && deviceInfo && deviceInfo.fullName !== deviceInfo.name && (
+        <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
+          <div className="font-medium">Nombre completo:</div>
+          <div>{deviceInfo.fullName}</div>
         </div>
       )}
     </div>

@@ -3,13 +3,14 @@ import { bluetoothService, formatBluetoothError } from '../services/bluetooth';
 
 interface BluetoothState {
   device: any | null;
-  deviceInfo: { name: string; mac: string; id: string } | null;
+  deviceInfo: { name: string; mac: string; id: string; fullName: string } | null;
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
   initializeBluetoothState: () => Promise<void>;
   connectToDevice: () => Promise<void>;
   disconnectDevice: () => Promise<void>;
+  clearError: () => void;
 }
 
 export const useBluetoothStore = create<BluetoothState>((set, get) => ({
@@ -43,6 +44,8 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
         await bluetoothService.connect();
         const deviceInfo = bluetoothService.getDeviceInfo();
         
+        console.log('Device connected with info:', deviceInfo);
+        
         set({
           device,
           deviceInfo,
@@ -52,6 +55,7 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
         });
       }
     } catch (error) {
+      console.error('Connection error:', error);
       set({
         isConnecting: false,
         error: formatBluetoothError(error)
@@ -71,5 +75,9 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
     } catch (error) {
       set({ error: formatBluetoothError(error) });
     }
+  },
+
+  clearError: () => {
+    set({ error: null });
   }
 }));

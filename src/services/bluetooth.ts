@@ -5,6 +5,7 @@ export interface BluetoothDevice {
   connected: boolean;
   macAddress?: string;
   deviceName?: string;
+  advertisementName?: string;
 }
 
 export interface BluetoothMessage {
@@ -43,16 +44,18 @@ class BluetoothService {
       // Store the native device reference
       this.nativeDevice = nativeDevice as any;
 
-      // Extract device information
+      // Extract comprehensive device information
       const deviceName = nativeDevice.name || 'Dispositivo Desconocido';
       const deviceId = nativeDevice.id || 'unknown-id';
       
-      // Try to get MAC address if available (some browsers provide it)
+      // Try to get MAC address and additional device info
       let macAddress = 'No disponible';
+      let advertisementName = deviceName;
+      
       try {
         // Some browsers might expose the MAC address in the device ID
         if (deviceId.includes(':') && deviceId.length >= 17) {
-          macAddress = deviceId;
+          macAddress = deviceId.toUpperCase();
         } else if (nativeDevice.id && nativeDevice.id.length >= 12) {
           // Format as MAC address if it looks like one
           const id = nativeDevice.id.replace(/[^a-fA-F0-9]/g, '');
@@ -60,8 +63,26 @@ class BluetoothService {
             macAddress = id.substring(0, 12).match(/.{2}/g)?.join(':').toUpperCase() || 'No disponible';
           }
         }
+
+        // Try to get advertisement data if available
+        if ('watchAdvertisements' in nativeDevice) {
+          try {
+            await nativeDevice.watchAdvertisements();
+            nativeDevice.addEventListener('advertisementreceived', (event: any) => {
+              if (event.name && event.name !== deviceName) {
+                advertisementName = event.name;
+                // Update stored device info
+                if (this.device) {
+                  this.device.advertisementName = advertisementName;
+                }
+              }
+            });
+          } catch (advError) {
+            console.warn('Could not watch advertisements:', advError);
+          }
+        }
       } catch (error) {
-        console.warn('Could not extract MAC address:', error);
+        console.warn('Could not extract additional device info:', error);
       }
 
       this.device = {
@@ -69,10 +90,18 @@ class BluetoothService {
         name: deviceName,
         connected: false,
         macAddress: macAddress,
-        deviceName: deviceName
+        deviceName: deviceName,
+        advertisementName: advertisementName
       };
 
       nativeDevice.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
+
+      console.log('Device selected:', {
+        name: deviceName,
+        id: deviceId,
+        mac: macAddress,
+        advertisementName: advertisementName
+      });
 
       return this.device;
     } catch (error) {
@@ -118,12 +147,15 @@ class BluetoothService {
         // Start notifications
         await this.characteristic.startNotifications();
         this.characteristic.addEventListener('characteristicvaluechanged', this.handleNotification.bind(this));
+        
+        console.log('Connected to D&D service successfully');
       } catch (serviceError) {
         console.warn('Could not connect to D&D service, using basic connection:', serviceError);
       }
       
       console.log('Connected to Bluetooth device:', {
         name: this.device.deviceName,
+        advertisementName: this.device.advertisementName,
         mac: this.device.macAddress,
         id: this.device.id
       });
@@ -159,6 +191,8 @@ class BluetoothService {
         const messageStr = decoder.decode(value);
         const message: BluetoothMessage = JSON.parse(messageStr);
         
+        console.log('Received Bluetooth message:', message);
+        
         // Notify all registered handlers
         this.messageHandlers.forEach(handler => {
           try {
@@ -183,6 +217,7 @@ class BluetoothService {
       const encoder = new TextEncoder();
       const data = encoder.encode(JSON.stringify(message));
       await this.characteristic.writeValue(data);
+      console.log('Message sent successfully:', message.type);
     } catch (error) {
       console.error('Error sending Bluetooth message:', error);
       throw error;
@@ -201,13 +236,20 @@ class BluetoothService {
     return this.device;
   }
 
-  getDeviceInfo(): { name: string; mac: string; id: string } | null {
+  getDeviceInfo(): { name: string; mac: string; id: string; fullName: string } | null {
     if (!this.device) return null;
     
+    // Determine the best name to show
+    const displayName = this.device.advertisementName || this.device.deviceName || this.device.name;
+    const fullName = this.device.advertisementName && this.device.advertisementName !== this.device.deviceName 
+      ? `${this.device.deviceName} (${this.device.advertisementName})`
+      : displayName;
+    
     return {
-      name: this.device.deviceName || this.device.name,
+      name: displayName,
       mac: this.device.macAddress || 'No disponible',
-      id: this.device.id
+      id: this.device.id,
+      fullName: fullName
     };
   }
 
