@@ -55,11 +55,20 @@ export const useBluetoothStore = create<BluetoothState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Connection error:', error);
-      set({
-        isConnecting: false,
-        error: formatBluetoothError(error)
-      });
+      // Check if the error is due to user cancellation
+      if (error instanceof Error && error.name === 'NotFoundError') {
+        console.info('User cancelled Bluetooth device selection');
+        set({
+          isConnecting: false,
+          error: null // Don't show error for user cancellation
+        });
+      } else {
+        console.error('Connection error:', error);
+        set({
+          isConnecting: false,
+          error: formatBluetoothError(error)
+        });
+      }
     }
   },
 
