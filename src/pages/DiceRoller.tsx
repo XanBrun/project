@@ -174,24 +174,24 @@ function DiceRoller() {
           <div className="flex space-x-3">
             <button 
               onClick={() => setShowHistory(!showHistory)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md text-sm sm:text-base"
             >
-              <History size={18} />
+              <History size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>Historial</span>
             </button>
             <button 
               onClick={clearSelection}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md text-sm sm:text-base"
             >
-              <RefreshCw size={18} />
+              <RefreshCw size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>Limpiar</span>
             </button>
             <button 
               onClick={handleRoll}
               disabled={isRolling || Object.keys(selectedDice).length === 0}
-              className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md transform hover:scale-105"
+              className="flex items-center space-x-1 sm:space-x-2 px-4 sm:px-6 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md transform hover:scale-105 text-sm sm:text-base"
             >
-              <Dice6 size={18} />
+              <Dice6 size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>{isRolling ? 'Lanzando...' : 'Lanzar Dados'}</span>
             </button>
           </div>

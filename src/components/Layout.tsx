@@ -84,9 +84,9 @@ function Layout() {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
-              className="p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
+              className="p-1.5 sm:p-2 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
             >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMobileMenuOpen ? <X size={20} className="sm:w-6 sm:h-6" /> : <Menu size={20} className="sm:w-6 sm:h-6" />}
             </button>
           </div>
         </div>
@@ -205,12 +205,12 @@ function Layout() {
                 (item.href === '/characters' && location.pathname.startsWith('/character'))
               )?.name || 'D&D Companion'}
             </h1>
-            <div className="flex items-center space-x-4">
+              className="relative flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm"
               <div className="flex items-center space-x-2 text-sm text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-amber-500'}`} />
-                <span className="font-medium">
+              <ShoppingCart size={16} />
+              <span className="hidden sm:inline">Carrito</span>
                   {isConnected ? (
-                    deviceInfo ? `${truncateDeviceName(deviceInfo.name, 20)}` : 'En línea'
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   ) : 'Sin conexión'}
                 </span>
               </div>

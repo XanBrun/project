@@ -416,12 +416,12 @@ function ShopPage() {
             {/* Cart Button */}
             <button
               onClick={() => setShowCart(true)}
-              className="relative flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
+              className="relative flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm sm:text-base"
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>Carrito</span>
               {getCartItemCount() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                   {getCartItemCount()}
                 </span>
               )}
@@ -589,7 +589,7 @@ function ShopPage() {
                     setCategoryFilter('');
                     setRarityFilter('');
                   }}
-                  className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                  className="px-4 sm:px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm sm:text-base"
                 >
                   Limpiar Filtros
                 </button>
@@ -652,9 +652,9 @@ function ShopPage() {
                   <button
                     onClick={() => addToCart(item)}
                     disabled={!selectedCharacter || item.inStock === 0}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="w-full flex items-center justify-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} className="sm:w-4 sm:h-4" />
                     <span>Agregar al Carrito</span>
                   </button>
                 </div>
@@ -765,14 +765,14 @@ function ShopPage() {
                   <div className="flex space-x-3">
                     <button
                       onClick={() => setCart([])}
-                      className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="flex-1 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                     >
                       Vaciar Carrito
                     </button>
                     <button
                       onClick={() => setShowCheckout(true)}
                       disabled={!selectedCharacter || cart.length === 0 || !canAfford(calculateTotalCost(), selectedCharacter.currency)}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                     >
                       Proceder al Pago
                     </button>
@@ -808,13 +808,13 @@ function ShopPage() {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowCheckout(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
               >
                 Cancelar
               </button>
               <button
                 onClick={handlePurchase}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
               >
                 Confirmar Compra
               </button>
