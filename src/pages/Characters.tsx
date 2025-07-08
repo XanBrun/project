@@ -161,9 +161,9 @@ function Characters() {
           
           <Link
             to="/character/create"
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg transform hover:scale-105"
+            className="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg transform hover:scale-105 text-sm sm:text-base"
           >
-            <UserPlus size={20} />
+            <UserPlus size={16} className="sm:w-5 sm:h-5" />
             <span>Crear Personaje</span>
           </Link>
         </div>
@@ -257,9 +257,9 @@ function Characters() {
               </p>
               <Link
                 to="/character/create"
-                className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg transform hover:scale-105 text-lg font-semibold"
+                className="inline-flex items-center space-x-2 px-4 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg transform hover:scale-105 text-base sm:text-lg font-semibold"
               >
-                <UserPlus size={24} />
+                <UserPlus size={20} className="sm:w-6 sm:h-6" />
                 <span>Crear Mi Primer Personaje</span>
               </Link>
             </>
@@ -274,7 +274,7 @@ function Characters() {
                   setFilterClass('');
                   setFilterLevel('');
                 }}
-                className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                className="mt-4 px-4 sm:px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm sm:text-base"
               >
                 Limpiar Filtros
               </button>
@@ -357,17 +357,17 @@ function Characters() {
                   <div className="flex space-x-2">
                     <Link
                       to={`/character/${character.id}`}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex-1 flex items-center justify-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
                     >
-                      <Eye size={16} />
+                      <Eye size={14} className="sm:w-4 sm:h-4" />
                       <span>Ver</span>
                     </Link>
                     
                     <button
                       onClick={() => setShowDeleteModal(character.id)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="px-2 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
 
@@ -394,34 +394,34 @@ function Characters() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Link
               to="/dice"
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-4 text-center transition-colors"
+              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
             >
-              <Zap className="w-8 h-8 mx-auto mb-2" />
-              <div className="font-semibold">Lanzar Dados</div>
+              <Zap className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+              <div className="font-semibold text-sm sm:text-base">Lanzar Dados</div>
             </Link>
             
             <Link
               to="/combat"
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-4 text-center transition-colors"
+              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
             >
-              <Sword className="w-8 h-8 mx-auto mb-2" />
-              <div className="font-semibold">Combate</div>
+              <Sword className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+              <div className="font-semibold text-sm sm:text-base">Combate</div>
             </Link>
             
             <Link
               to="/shop"
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-4 text-center transition-colors"
+              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
             >
-              <Coins className="w-8 h-8 mx-auto mb-2" />
-              <div className="font-semibold">Tienda</div>
+              <Coins className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+              <div className="font-semibold text-sm sm:text-base">Tienda</div>
             </Link>
             
             <Link
               to="/campaigns"
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-4 text-center transition-colors"
+              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
             >
-              <Users className="w-8 h-8 mx-auto mb-2" />
-              <div className="font-semibold">Campañas</div>
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
+              <div className="font-semibold text-sm sm:text-base">Campañas</div>
             </Link>
           </div>
         </div>
@@ -444,13 +444,13 @@ function Characters() {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteModal(null)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => handleDeleteCharacter(showDeleteModal)}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base"
               >
                 Eliminar
               </button>

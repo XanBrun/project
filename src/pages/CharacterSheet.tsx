@@ -141,26 +141,26 @@ function CharacterSheet() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate(`/shop?characterId=${character.id}`)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>Ir a la Tienda</span>
             </button>
             
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
-              <Edit size={18} />
+              <Edit size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>{isEditing ? 'Cancelar' : 'Editar'}</span>
             </button>
             
             {isEditing && (
               <button
                 onClick={handleSave}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
               >
-                <Save size={18} />
+                <Save size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span>Guardar</span>
               </button>
             )}
@@ -481,23 +481,23 @@ function CharacterSheet() {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/dice')}
-                className="w-full flex items-center justify-center space-x-2 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="w-full flex items-center justify-center space-x-2 p-2 sm:p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
               >
-                <Dice6 size={18} />
+                <Dice6 size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span>Lanzar Dados</span>
               </button>
               <button
                 onClick={() => navigate('/combat')}
-                className="w-full flex items-center justify-center space-x-2 p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="w-full flex items-center justify-center space-x-2 p-2 sm:p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base"
               >
-                <Sword size={18} />
+                <Sword size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span>Ir a Combate</span>
               </button>
               <button
                 onClick={() => navigate(`/shop?characterId=${character.id}`)}
-                className="w-full flex items-center justify-center space-x-2 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full flex items-center justify-center space-x-2 p-2 sm:p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
               >
-                <ShoppingCart size={18} />
+                <ShoppingCart size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span>Visitar Tienda</span>
               </button>
             </div>
