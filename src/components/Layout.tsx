@@ -205,14 +205,16 @@ function Layout() {
                 (item.href === '/characters' && location.pathname.startsWith('/character'))
               )?.name || 'D&D Companion'}
             </h1>
-              className="relative flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm"
+            <div
+              className="relative flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md text-sm">
               <div className="flex items-center space-x-2 text-sm text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
-              <ShoppingCart size={16} />
-              <span className="hidden sm:inline">Carrito</span>
-                  {isConnected ? (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  ) : 'Sin conexión'}
-                </span>
+                <ShoppingCart size={16} />
+                <span className="hidden sm:inline">Carrito</span>
+                {isConnected ? (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    3
+                  </span>
+                ) : 'Sin conexión'}
               </div>
             </div>
           </div>
