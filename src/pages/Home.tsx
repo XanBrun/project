@@ -136,11 +136,11 @@ function Home() {
           return (
             <Link
               key={index}
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
-              className="bg-white text-purple-900 px-4 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm sm:text-base"
+              to={feature.href}
+              className="group bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-amber-200 hover:shadow-xl hover:border-amber-300 transition-all duration-200 block"
             >
-              <Zap className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
-              <div className="font-semibold text-sm sm:text-base">Lanzar Dados</div>
+              <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
+                <Icon className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-amber-900 mb-2">{feature.title}</h3>
               <p className="text-amber-700 group-hover:text-amber-800 transition-colors duration-200">
@@ -150,18 +150,18 @@ function Home() {
           );
         })}
       </div>
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
+
       {/* Example Game Section */}
-              <Coins className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
-              <div className="font-semibold text-sm sm:text-base">Tienda</div>
+      <div className="bg-gradient-to-r from-purple-800 to-purple-900 rounded-2xl p-8 text-white shadow-2xl mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-2">Ejemplo de Juego Completo</h2>
           <p className="text-purple-200">Experimenta una aventura completa con contenido preconfigurado</p>
         </div>
         
-              className="bg-purple-700 hover:bg-purple-600 rounded-lg p-3 sm:p-4 text-center transition-colors"
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="text-center">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
-              <div className="font-semibold text-sm sm:text-base">Campañas</div>
+            <div className="bg-purple-700 rounded-lg p-4 mb-3">
+              <UserPlus className="w-8 h-8 mx-auto mb-2" />
               <h3 className="font-bold">1. Crea tu Héroe</h3>
             </div>
             <p className="text-sm text-purple-200">Diseña un personaje con 100 monedas de oro iniciales</p>
@@ -185,14 +185,14 @@ function Home() {
           
           <div className="text-center">
             <div className="bg-purple-700 rounded-lg p-4 mb-3">
-              <Sword className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" />
-              <div className="font-semibold text-sm sm:text-base">Combate</div>
+              <Sword className="w-8 h-8 mx-auto mb-2" />
+              <h3 className="font-bold">4. Combate Épico</h3>
             </div>
             <p className="text-sm text-purple-200">Usa tu equipo en combate con iniciativa automática</p>
           </div>
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center">
           <Link
             to="/campaigns"
             className="bg-white text-purple-900 px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
