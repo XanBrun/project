@@ -331,11 +331,35 @@ function ShopPage() {
       setShowCart(false);
       setShowCheckout(false);
 
-      alert('¡Compra realizada con éxito!');
+      // Show simple success message
+      const successMessage = document.createElement('div');
+      successMessage.textContent = '¡Compra realizada con éxito!';
+      successMessage.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium';
+      document.body.appendChild(successMessage);
+      
+      // Remove message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(successMessage)) {
+          document.body.removeChild(successMessage);
+        }
+      }, 3000);
+      
       console.log('Purchase completed successfully');
     } catch (error) {
       console.error('Error processing purchase:', error);
-      alert('Error al procesar la compra');
+      
+      // Show simple error message
+      const errorMessage = document.createElement('div');
+      errorMessage.textContent = 'Error al procesar la compra';
+      errorMessage.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 font-medium';
+      document.body.appendChild(errorMessage);
+      
+      // Remove message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(errorMessage)) {
+          document.body.removeChild(errorMessage);
+        }
+      }, 3000);
     }
   };
 
