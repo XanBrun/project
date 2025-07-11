@@ -36,7 +36,14 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: true
+    webContentsDebuggingEnabled: true,
+    buildOptions: {
+      keystorePath: undefined,
+      keystorePassword: undefined,
+      keystoreAlias: undefined,
+      keystoreAliasPassword: undefined,
+      releaseType: "APK"
+    }
   }
 };
 
