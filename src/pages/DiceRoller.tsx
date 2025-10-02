@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Minus, RefreshCw, History, Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from 'lucide-react';
 import { rollDice, loadDiceRolls } from '../services/db';
 import { DiceRoll } from '../types';
+import { useBluetoothStore } from '../stores/bluetoothStore';
 
 const diceTypes = [4, 6, 8, 10, 12, 20, 100];
 
@@ -30,6 +31,9 @@ function DiceRoller() {
   const [isRolling, setIsRolling] = useState(false);
   const [history, setHistory] = useState<DiceRoll[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  
+  // Bluetooth store for sharing dice rolls
+  const { isConnected, sendDiceRoll } = useBluetoothStore();
   
   useEffect(() => {
     loadHistory();
@@ -83,6 +87,25 @@ function DiceRoller() {
         total: totalSum,
         modifier
       });
+      
+      // Send dice roll via Bluetooth if connected
+      if (isConnected) {
+        try {
+          const allResults: number[] = [];
+          Object.entries(results).forEach(([diceType, diceResults]) => {
+            allResults.push(...(diceResults as number[]));
+          });
+          
+          const diceTypeString = Object.keys(selectedDice)
+            .map(type => `${selectedDice[parseInt(type)]}d${type}`)
+            .join(' + ');
+          
+          await sendDiceRoll(diceTypeString, allResults, modifier);
+          console.log('📤 Dice roll shared via Bluetooth');
+        } catch (error) {
+          console.warn('Could not share dice roll via Bluetooth:', error);
+        }
+      }
       
       setIsRolling(false);
       loadHistory(); // Refresh history
@@ -193,6 +216,9 @@ function DiceRoller() {
             >
               <Dice6 size={16} className="sm:w-[18px] sm:h-[18px]" />
               <span>{isRolling ? 'Lanzando...' : 'Lanzar Dados'}</span>
+              {isConnected && (
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse ml-1" />
+              )}
             </button>
           </div>
         </div>
@@ -271,6 +297,11 @@ function DiceRoller() {
             <div className="text-center p-6 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl shadow-lg">
               <h3 className="text-2xl font-bold mb-2">Total Final</h3>
               <p className="text-5xl font-bold">{rollResults.total}</p>
+              {isConnected && (
+                <div className="mt-2 text-sm opacity-90">
+                  ✅ Compartido vía Bluetooth
+                </div>
+              )}
             </div>
           </div>
         </div>

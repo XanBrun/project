@@ -5,6 +5,7 @@ import {
   loadShops, saveShop, loadCharacters, loadCharacter, saveCharacter, 
   saveTransaction, generateId 
 } from '../services/db';
+import { useBluetoothStore } from '../stores/bluetoothStore';
 import { 
   Shop, ShopItem, Character, CartItem, Transaction, Currency,
   CURRENCY_CONVERSION, CURRENCY_NAMES, CURRENCY_SYMBOLS,
@@ -28,6 +29,9 @@ function ShopPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Bluetooth store for sharing purchases
+  const { isConnected, sendShopPurchase } = useBluetoothStore();
 
   useEffect(() => {
     loadData();
@@ -326,6 +330,16 @@ function ShopPage() {
 
       await saveTransaction(transaction);
 
+      // Send purchase via Bluetooth if connected
+      if (isConnected) {
+        try {
+          await sendShopPurchase(selectedCharacter.id, cart, totalCost);
+          console.log('📤 Purchase shared via Bluetooth');
+        } catch (error) {
+          console.warn('Could not share purchase via Bluetooth:', error);
+        }
+      }
+
       // Clear cart and close modals
       setCart([]);
       setShowCart(false);
@@ -616,6 +630,9 @@ function ShopPage() {
                   className="px-4 sm:px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm sm:text-base"
                 >
                   Limpiar Filtros
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse ml-2 inline-block" />
+                  )}
                 </button>
               )}
             </div>

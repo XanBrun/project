@@ -26,12 +26,15 @@ const config: CapacitorConfig = {
     },
     BluetoothLe: {
       displayStrings: {
-        scanning: "Buscando dispositivos...",
+        scanning: "Buscando dispositivos D&D...",
         cancel: "Cancelar",
-        availableDevices: "Dispositivos disponibles",
-        noDeviceFound: "No se encontraron dispositivos"
+        availableDevices: "Dispositivos D&D disponibles",
+        noDeviceFound: "No se encontraron dispositivos D&D cercanos"
       }
-    }
+    },
+    Device: {},
+    Network: {},
+    Preferences: {}
   },
   android: {
     allowMixedContent: true,

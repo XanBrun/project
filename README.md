@@ -69,12 +69,17 @@ Una aplicación nativa de Android para gestionar aventuras de Dungeons & Dragons
 
 ### **Móvil Nativo**
 - **Capacitor 5** para aplicación nativa
-- **Capacitor Bluetooth LE** para conectividad nativa
+- **Capacitor Bluetooth LE 6.0+** para conectividad nativa completa
+- **Capacitor Device** para información del dispositivo
+- **Capacitor Network** para estado de conectividad
+- **Capacitor Preferences** para configuraciones nativas
 - **Android SDK** para funcionalidades específicas
 - **Gradle** para construcción de APK
 
 ### **APIs y Servicios**
-- **Bluetooth LE API** nativa para Android
+- **Bluetooth LE API** nativa con escaneo automático
+- **Permisos Android** optimizados para 6+ y 12+
+- **Reconexión automática** a dispositivos conocidos
 - **File System API** para almacenamiento
 - **Status Bar API** para personalización
 - **Splash Screen API** para pantalla de carga
@@ -101,8 +106,8 @@ git clone <repository-url>
 cd dnd-local
 npm install
 
-# 2. Construir APK nativa
-./scripts/build-native-apk.sh
+# 2. Construir APK móvil con Bluetooth nativo
+./scripts/build-mobile-apk.sh
 
 # 3. Instalar en dispositivo
 adb install android/app/build/outputs/apk/debug/app-debug.apk
@@ -118,48 +123,69 @@ npm run dev
 npm run build:mobile
 
 # Abrir en Android Studio
-npm run android:open
+npx cap open android
 
 # Ejecutar en dispositivo
-npm run android:dev
+npx cap run android
 ```
 
-## 🔵 Funcionalidades Bluetooth Nativas
+## 🔵 Bluetooth Nativo Completo
 
-### **Permisos Incluidos**
-- `BLUETOOTH` - Acceso básico a Bluetooth
-- `BLUETOOTH_ADMIN` - Administración de Bluetooth
-- `BLUETOOTH_SCAN` - Escaneo de dispositivos (Android 12+)
-- `BLUETOOTH_CONNECT` - Conexión a dispositivos (Android 12+)
+### **Permisos Optimizados por Versión**
+
+#### **Android 6-11:**
+- `BLUETOOTH` - Acceso básico
+- `BLUETOOTH_ADMIN` - Administración
 - `ACCESS_COARSE_LOCATION` - Ubicación para escaneo
 - `ACCESS_FINE_LOCATION` - Ubicación precisa
 
+#### **Android 12+:**
+- `BLUETOOTH_SCAN` - Escaneo sin ubicación
+- `BLUETOOTH_CONNECT` - Conexión a dispositivos
+- `BLUETOOTH_ADVERTISE` - Anuncio de servicios
+- Permisos de ubicación opcionales
+
 ### **Características Nativas**
-- **Escaneo automático** de dispositivos D&D cercanos
-- **Conexión estable** sin limitaciones del navegador
-- **Notificaciones** en tiempo real
-- **Gestión de permisos** automática
-- **Reconexión automática** a dispositivos conocidos
+- **🔍 Escaneo Inteligente**: Busca automáticamente dispositivos D&D cercanos
+- **🔗 Conexión Estable**: Sin limitaciones del navegador web
+- **🔔 Notificaciones Nativas**: Mensajes en tiempo real
+- **🔐 Gestión de Permisos**: Solicitud automática según versión Android
+- **🔄 Reconexión Automática**: Se reconecta a dispositivos conocidos
+- **📡 Información Detallada**: RSSI, MAC address, servicios disponibles
+- **⚡ Rendimiento Optimizado**: Uso eficiente de batería
 
 ### **Mensajes Sincronizados**
-- **Lanzamientos de dados** en tiempo real
-- **Actualizaciones de personajes** automáticas
-- **Acciones de combate** sincronizadas
-- **Compras en tienda** compartidas
-- **Eventos de campaña** distribuidos
+- **🎲 Lanzamientos de Dados**: Compartidos en tiempo real con detalles completos
+- **👤 Actualizaciones de Personajes**: Cambios automáticos sincronizados
+- **⚔️ Acciones de Combate**: Turnos e iniciativa compartidos
+- **🛒 Compras en Tienda**: Transacciones visibles para todo el grupo
+- **📚 Eventos de Campaña**: Notificaciones de progreso distribuidas
 
 ## 🎮 Uso Multijugador
 
 ### **Configuración de Sesión**
-1. **DM (Dungeon Master)**: Inicia la aplicación y activa Bluetooth
-2. **Jugadores**: Escanean y se conectan al dispositivo del DM
-3. **Sincronización**: Todos los eventos se comparten automáticamente
+1. **DM (Dungeon Master)**: 
+   - Abre la aplicación móvil
+   - Activa Bluetooth si no está encendido
+   - La app se anuncia automáticamente como dispositivo D&D
+
+2. **Jugadores**: 
+   - Abren la aplicación móvil
+   - Tocan "Buscar Dispositivos" en el estado Bluetooth
+   - Seleccionan el dispositivo del DM de la lista
+   - Conexión automática y estable
+
+3. **Sincronización Automática**: 
+   - Todos los eventos se comparten instantáneamente
+   - Reconexión automática si se pierde la conexión
+   - Historial de dispositivos para conexión rápida
 
 ### **Funciones Multijugador**
-- **Dados compartidos**: Todos ven los resultados en tiempo real
-- **Combate sincronizado**: Turnos e iniciativa compartidos
-- **Mapas colaborativos**: Marcadores visibles para todos
-- **Chat de eventos**: Notificaciones automáticas de acciones
+- **🎲 Dados Compartidos**: Resultados visibles para todos con animaciones
+- **⚔️ Combate Sincronizado**: Turnos, HP y condiciones en tiempo real
+- **🗺️ Mapas Colaborativos**: Marcadores y mediciones compartidas
+- **💬 Eventos Automáticos**: Notificaciones de todas las acciones
+- **🛒 Tienda Grupal**: Compras visibles para gestión de recursos
 
 ## 🛒 Tiendas Incluidas
 
@@ -242,26 +268,28 @@ npm run build:mobile       # Construcción + sync móvil
 
 # Android
 npm run android:dev        # Ejecutar en dispositivo
-npm run android:build      # Construir APK
+npm run mobile:apk         # Construir APK optimizada
 npm run android:open       # Abrir Android Studio
 npm run android:sync       # Sincronizar cambios
 
 # Capacitor
-npm run capacitor:add      # Agregar plataforma
-npm run capacitor:copy     # Copiar assets
-npm run capacitor:update   # Actualizar plugins
+npx cap add android        # Agregar plataforma Android
+npx cap copy android       # Copiar assets
+npx cap sync android       # Sincronizar todo
 ```
 
 ## 📈 Estado del Proyecto
 
-**Versión**: 2.0.0 (Nativa)  
+**Versión**: 2.1.0 (Bluetooth Nativo Completo)  
 **Estado**: Completamente Funcional ✅  
 **Plataforma**: Android Nativo  
 **Última actualización**: Diciembre 2024
 
 ### Funcionalidades Implementadas
 - ✅ Aplicación nativa Android
-- ✅ Bluetooth LE nativo completo
+- ✅ Bluetooth LE nativo completo con escaneo automático
+- ✅ Permisos optimizados para Android 6+ y 12+
+- ✅ Reconexión automática y gestión de errores
 - ✅ Sistema de personajes avanzado
 - ✅ Tienda con carrito de compras
 - ✅ Sistema de monedas D&D 5e
@@ -269,6 +297,8 @@ npm run capacitor:update   # Actualizar plugins
 - ✅ Gestión de campañas completa
 - ✅ Mapas interactivos colaborativos
 - ✅ Almacenamiento offline robusto
+- ✅ Compartir dados y compras vía Bluetooth
+- ✅ Interfaz móvil optimizada
 
 ## 🤝 Contribución
 
