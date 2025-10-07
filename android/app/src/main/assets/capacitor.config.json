@@ -1,0 +1,42 @@
+{
+	"appId": "com.dndlocal.app",
+	"appName": "D&D Local",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"backgroundColor": "#FEF3C7",
+			"showSpinner": false,
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP"
+		},
+		"StatusBar": {
+			"style": "dark",
+			"backgroundColor": "#D97706"
+		},
+		"Keyboard": {
+			"resize": "body",
+			"style": "dark",
+			"resizeOnFullScreen": true
+		},
+		"BluetoothLe": {
+			"displayStrings": {
+				"scanning": "Buscando dispositivos D&D...",
+				"cancel": "Cancelar",
+				"availableDevices": "Dispositivos D&D disponibles",
+				"noDeviceFound": "No se encontraron dispositivos D&D cercanos"
+			}
+		},
+		"Device": {},
+		"Network": {},
+		"Preferences": {}
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": true
+	}
+}
