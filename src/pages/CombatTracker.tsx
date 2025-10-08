@@ -10,6 +10,8 @@ import {
 import { CombatEncounter, CombatParticipant, Character, NPCTemplate } from '../types';
 import { useBluetoothStore } from '../stores/bluetoothStore';
 import BluetoothStatus from '../components/bluetooth/BluetoothStatus';
+import ConditionsManager from '../components/combat/ConditionsManager';
+import CombatLog, { CombatLogEntry } from '../components/combat/CombatLog';
 
 function CombatTracker() {
   const [encounters, setEncounters] = useState<CombatEncounter[]>([]);
@@ -19,9 +21,11 @@ function CombatTracker() {
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [combatLog, setCombatLog] = useState<CombatLogEntry[]>([]);
+  const [showLog, setShowLog] = useState(false);
 
-  // Bluetooth store
-  const { isConnected, deviceInfo } = useBluetoothStore();
+  // Bluetooth store with send capabilities
+  const { isConnected, deviceInfo, sendCharacterUpdate } = useBluetoothStore();
 
   const [newParticipant, setNewParticipant] = useState<Partial<CombatParticipant>>({
     name: '',
@@ -124,7 +128,7 @@ function CombatTracker() {
 
     const updatedEncounter = {
       ...currentEncounter,
-      participants: currentEncounter.participants.map(p => 
+      participants: currentEncounter.participants.map(p =>
         p.id === participantId ? { ...p, ...updates } : p
       ),
       updatedAt: Date.now()
@@ -133,6 +137,22 @@ function CombatTracker() {
     await saveCombatEncounter(updatedEncounter);
     setCurrentEncounter(updatedEncounter);
     setEncounters(prev => prev.map(e => e.id === updatedEncounter.id ? updatedEncounter : e));
+
+    // Sync HP changes via Bluetooth
+    if (isConnected && updates.hitPoints) {
+      try {
+        const participant = updatedEncounter.participants.find(p => p.id === participantId);
+        await sendCharacterUpdate(participantId, {
+          type: 'hp_update',
+          name: participant?.name,
+          hitPoints: updates.hitPoints,
+          timestamp: Date.now()
+        });
+        console.log('📤 HP update synced via Bluetooth');
+      } catch (error) {
+        console.warn('Could not sync HP via Bluetooth:', error);
+      }
+    }
   };
 
   const removeParticipant = async (participantId: string) => {
@@ -149,6 +169,17 @@ function CombatTracker() {
     setEncounters(prev => prev.map(e => e.id === updatedEncounter.id ? updatedEncounter : e));
   };
 
+  const addLogEntry = (type: CombatLogEntry['type'], message: string, participantName?: string) => {
+    const entry: CombatLogEntry = {
+      id: generateId(),
+      type,
+      message,
+      timestamp: Date.now(),
+      participantName
+    };
+    setCombatLog(prev => [...prev, entry]);
+  };
+
   const startCombat = async () => {
     if (!currentEncounter) return;
 
@@ -163,6 +194,7 @@ function CombatTracker() {
     await saveCombatEncounter(updatedEncounter);
     setCurrentEncounter(updatedEncounter);
     setEncounters(prev => prev.map(e => e.id === updatedEncounter.id ? updatedEncounter : e));
+    addLogEntry('action', `¡El combate ha comenzado! Ronda 1`);
   };
 
   const nextTurn = async () => {
@@ -186,6 +218,30 @@ function CombatTracker() {
     await saveCombatEncounter(updatedEncounter);
     setCurrentEncounter(updatedEncounter);
     setEncounters(prev => prev.map(e => e.id === updatedEncounter.id ? updatedEncounter : e));
+
+    // Add log entry
+    const currentParticipant = updatedEncounter.participants[newTurn];
+    if (newTurn === 0) {
+      addLogEntry('turn', `Ronda ${newRound} - Turno de ${currentParticipant?.name}`, currentParticipant?.name);
+    } else {
+      addLogEntry('turn', `Turno de ${currentParticipant?.name}`, currentParticipant?.name);
+    }
+
+    // Sync turn change via Bluetooth
+    if (isConnected) {
+      try {
+        await sendCharacterUpdate('combat_turn', {
+          encounterId: updatedEncounter.id,
+          currentTurn: newTurn,
+          round: newRound,
+          participantName: currentParticipant?.name,
+          timestamp: Date.now()
+        });
+        console.log('📤 Turn change synced via Bluetooth');
+      } catch (error) {
+        console.warn('Could not sync turn via Bluetooth:', error);
+      }
+    }
   };
 
   const endCombat = async () => {
@@ -260,8 +316,14 @@ function CombatTracker() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <BluetoothStatus showDetails={false} compact={true} />
+            {isConnected && (
+              <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 rounded-lg border border-green-300">
+                <Zap className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-900">Sincronizado</span>
+              </div>
+            )}
             <button
               onClick={createNewEncounter}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md"
